@@ -1,7 +1,7 @@
 {
-    "name": "sylius/plugin-skeleton",
+    "name": "webgriffe/sylius-nexi-plugin",
     "type": "sylius-plugin",
-    "description": "Acme example plugin for Sylius.",
+    "description": "Nexi payment plugin for Sylius.",
     "keywords": [
         "sylius",
         "sylius-plugin"
@@ -59,8 +59,8 @@
     },
     "autoload": {
         "psr-4": {
-            "Acme\\SyliusExamplePlugin\\": "src/",
-            "Tests\\Acme\\SyliusExamplePlugin\\": "tests/"
+            "Webgriffe\\SyliusNexiPlugin\\": "src/",
+            "Tests\\Webgriffe\\SyliusNexiPlugin\\": "tests/"
         }
     },
     "autoload-dev": {
