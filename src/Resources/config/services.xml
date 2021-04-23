@@ -3,5 +3,36 @@
 <container xmlns="http://symfony.com/schema/dic/services" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
     <services>
         <!-- Put your services here -->
+        <defaults autoconfigure="false" autowire="false" public="false" />
+
+        <service id="webgriffe_sylius_nexi.form.type.gateway_configuration" class="Webgriffe\SyliusNexiPlugin\Form\Type\NexiConfigurationType">
+            <tag name="form.type" />
+            <tag name="sylius.gateway_configuration_type" type="nexi" label="Nexi Gateway" />
+        </service>
+
+        <service id="webgriffe_sylius_nexi.gateway_factory_builder" class="Payum\Core\Bridge\Symfony\Builder\GatewayFactoryBuilder">
+            <argument>Webgriffe\SyliusNexiPlugin\Payum\Nexi\NexiGatewayFactory</argument>
+
+            <tag name="payum.gateway_factory_builder" factory="nexi" />
+        </service>
+
+        <service id="webgriffe_sylius_nexi.action.status" class="Webgriffe\SyliusNexiPlugin\Payum\Nexi\Action\StatusAction" public="true">
+            <argument type="service" id="webgriffe_sylius_nexi.logger" />
+        </service>
+
+        <service id="webgriffe_sylius_nexi.action.capture" class="Webgriffe\SyliusNexiPlugin\Payum\Nexi\Action\CaptureAction" public="true">
+            <argument type="service" id="webgriffe_sylius_nexi.lib.signer" />
+            <argument type="service" id="webgriffe_sylius_nexi.lib.checker" />
+        </service>
+
+        <service id="webgriffe_sylius_nexi.lib.signer" class="Webgriffe\LibQuiPago\Signature\DefaultSigner">
+            <argument type="service" id="webgriffe_sylius_nexi.logger" />
+        </service>
+
+        <service id="webgriffe_sylius_nexi.lib.checker" class="Webgriffe\LibQuiPago\Signature\DefaultChecker">
+            <argument type="service" id="webgriffe_sylius_nexi.logger" />
+        </service>
+
+        <service id="webgriffe_sylius_nexi.logger" alias="monolog.logger.payum" />
     </services>
 </container>
