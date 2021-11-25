@@ -22,7 +22,7 @@ final class StatusAction implements ActionInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function execute($request): void
     {
@@ -61,7 +61,7 @@ final class StatusAction implements ActionInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function supports($request)
     {
