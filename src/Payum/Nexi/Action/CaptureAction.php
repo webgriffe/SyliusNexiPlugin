@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Webgriffe\SyliusNexiPlugin\Payum\Nexi\Action;
 
-use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
 use GuzzleHttp\Psr7\ServerRequest;
 use Payum\Core\Action\ActionInterface;
 use Payum\Core\ApiAwareInterface;
@@ -29,6 +28,7 @@ use Webgriffe\LibQuiPago\Notification\Result;
 use Webgriffe\LibQuiPago\PaymentInit\Request;
 use Webgriffe\LibQuiPago\Signature\Checker;
 use Webgriffe\LibQuiPago\Signature\Signer;
+use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
 use Webmozart\Assert\Assert;
 
 final class CaptureAction implements ActionInterface, ApiAwareInterface, GatewayAwareInterface
@@ -51,7 +51,7 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function setApi($api): void
     {
@@ -63,7 +63,7 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function execute($request): void
     {
@@ -147,7 +147,7 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function supports($request)
     {
