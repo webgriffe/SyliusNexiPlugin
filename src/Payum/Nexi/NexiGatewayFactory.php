@@ -25,9 +25,7 @@ final class NexiGatewayFactory extends GatewayFactory
             $config->defaults($config['payum.default_options']);
             $config['payum.required_options'] = ['alias', 'mac_key', 'sandbox'];
 
-            $config['payum.api'] = static function (\ArrayObject $config): Api {
-                return new Api((array) $config);
-            };
+            $config['payum.api'] = static fn (\ArrayObject $config): Api => new Api((array) $config);
         }
     }
 }

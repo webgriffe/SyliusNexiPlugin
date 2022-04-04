@@ -38,21 +38,12 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
     /** @var Api */
     protected $api;
 
-    /** @var Signer */
-    private $signer;
-
-    /** @var Checker */
-    private $checker;
-
-    public function __construct(Signer $signer, Checker $checker)
-    {
-        $this->signer = $signer;
-        $this->checker = $checker;
+    public function __construct(
+        private Signer $signer,
+        private Checker $checker
+    ) {
     }
 
-    /**
-     * @inheritdoc
-     */
     public function setApi($api): void
     {
         if (false === $api instanceof Api) {
@@ -62,9 +53,6 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
         $this->api = $api;
     }
 
-    /**
-     * @inheritdoc
-     */
     public function execute($request): void
     {
         RequestNotSupportedException::assertSupports($this, $request);
@@ -146,9 +134,6 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
         );
     }
 
-    /**
-     * @inheritdoc
-     */
     public function supports($request)
     {
         return
@@ -158,27 +143,17 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
 
     private function mapLocaleCodeToNexiLocaleCode(?string $localeCode): string
     {
-        switch (strtolower(substr((string) $localeCode, 0, 2))) {
-            case 'it':
-                return 'ITA';
-            case 'es':
-                return 'SPA';
-            case 'fr':
-                return 'FRA';
-            case 'de':
-                return 'GER';
-            case 'ja':
-                return 'JPN';
-            case 'cn':
-                return 'CHI';
-            case 'ar':
-                return 'ARA';
-            case 'ru':
-                return 'RUS';
-            case 'pt':
-                return 'POR';
-            default:
-                return 'ENG';
-        }
+        return match (strtolower(substr((string) $localeCode, 0, 2))) {
+            'it' => 'ITA',
+            'es' => 'SPA',
+            'fr' => 'FRA',
+            'de' => 'GER',
+            'ja' => 'JPN',
+            'cn' => 'CHI',
+            'ar' => 'ARA',
+            'ru' => 'RUS',
+            'pt' => 'POR',
+            default => 'ENG',
+        };
     }
 }
