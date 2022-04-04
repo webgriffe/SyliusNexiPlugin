@@ -13,18 +13,20 @@ class NexiConfigurationType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $builder->add('alias', TextType::class, ['label' => 'Merchant Alias'])
-                ->add('mac_key', TextType::class, ['label' => 'Mac Key'])
-                ->add(
-                    'sandbox',
-                    ChoiceType::class,
-                    [
-                        'choices' => [
-                            'Yes' => true,
-                            'No' => false,
-                        ],
-                        'label' => 'Sanbox Mode Enabled',
-                    ]
-                );
+        $builder
+            ->add('alias', TextType::class, ['label' => 'Merchant Alias'])
+            ->add('mac_key', TextType::class, ['label' => 'Mac Key'])
+            ->add(
+                'sandbox',
+                ChoiceType::class,
+                [
+                    'choices' => [
+                        'Yes' => true,
+                        'No' => false,
+                    ],
+                    'label' => 'Sanbox Mode Enabled',
+                ]
+            )
+        ;
     }
 }

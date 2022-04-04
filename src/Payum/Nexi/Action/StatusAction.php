@@ -13,17 +13,10 @@ use Webgriffe\LibQuiPago\Notification\Result;
 
 final class StatusAction implements ActionInterface
 {
-    /** @var LoggerInterface */
-    private $logger;
-
-    public function __construct(LoggerInterface $logger)
+    public function __construct(private LoggerInterface $logger)
     {
-        $this->logger = $logger;
     }
 
-    /**
-     * @inheritdoc
-     */
     public function execute($request): void
     {
         RequestNotSupportedException::assertSupports($this, $request);
@@ -60,10 +53,7 @@ final class StatusAction implements ActionInterface
         $request->markUnknown();
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function supports($request)
+    public function supports($request): bool
     {
         return
             $request instanceof GetStatusInterface &&
