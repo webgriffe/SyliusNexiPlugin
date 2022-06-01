@@ -23,6 +23,7 @@
         <service id="webgriffe_sylius_nexi.action.capture" class="Webgriffe\SyliusNexiPlugin\Payum\Nexi\Action\CaptureAction" public="true">
             <argument type="service" id="webgriffe_sylius_nexi.lib.signer" />
             <argument type="service" id="webgriffe_sylius_nexi.lib.checker" />
+            <argument type="service" id="webgriffe_sylius_nexi.decoder.request_params"/>
         </service>
 
         <service id="webgriffe_sylius_nexi.lib.signer" class="Webgriffe\LibQuiPago\Signature\DefaultSigner">
@@ -34,5 +35,7 @@
         </service>
 
         <service id="webgriffe_sylius_nexi.logger" alias="monolog.logger.payum" />
+
+        <service id="webgriffe_sylius_nexi.decoder.request_params" class="Webgriffe\SyliusNexiPlugin\Decoder\RequestParamsDecoder"/>
     </services>
 </container>
