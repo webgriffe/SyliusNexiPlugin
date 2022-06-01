@@ -28,6 +28,7 @@ use Webgriffe\LibQuiPago\Notification\Result;
 use Webgriffe\LibQuiPago\PaymentInit\Request;
 use Webgriffe\LibQuiPago\Signature\Checker;
 use Webgriffe\LibQuiPago\Signature\Signer;
+use Webgriffe\SyliusNexiPlugin\Decoder\RequestParamsDecoderInterface;
 use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
 use Webmozart\Assert\Assert;
 
@@ -40,7 +41,8 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
 
     public function __construct(
         private Signer $signer,
-        private Checker $checker
+        private Checker $checker,
+        private RequestParamsDecoderInterface $decoder
     ) {
     }
 
@@ -64,11 +66,15 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
         $payment = $request->getFirstModel();
 
         $isPost = false;
+        /** @var array<string, string> $requestParams */
         $requestParams = $httpRequest->query;
         if (count($requestParams) === 0) {
+            /** @var array<string, string> $requestParams */
             $requestParams = $httpRequest->request;
             $isPost = true;
         }
+
+        $requestParams = $this->decoder->decode($requestParams);
 
         if (isset($requestParams['esito'])) {
             /** @var ArrayObject $details */
