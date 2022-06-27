@@ -24,23 +24,33 @@ final class StatusAction implements ActionInterface
         $details = ArrayObject::ensureArrayObject($request->getModel());
 
         if (count($details->getArrayCopy()) === 0) {
+            $this->logger->warning('HTTP Request has not payment details');
+
             return;
         }
 
         if ($details->get('esito') === Result::OUTCOME_OK) {
+            $this->logger->info(
+                'Nexi payment status is ok.',
+                $details->getArrayCopy()
+            );
             $request->markCaptured();
 
             return;
         }
 
         if ($details->get('esito') === Result::OUTCOME_ANNULLO) {
+            $this->logger->notice(
+                'Nexi payment status is cancelled.',
+                $details->getArrayCopy()
+            );
             $request->markCanceled();
 
             return;
         }
 
         if (in_array($details->get('esito'), [Result::OUTCOME_KO, Result::OUTCOME_ERRORE], true)) {
-            $this->logger->error(
+            $this->logger->warning(
                 'Nexi payment status is not ok or canceled and will be marked as failed.',
                 $details->getArrayCopy()
             );
@@ -49,7 +59,10 @@ final class StatusAction implements ActionInterface
             return;
         }
 
-        $this->logger->error('Nexi payment status is invalid and will be marked as unknown.', $details->getArrayCopy());
+        $this->logger->warning(
+            'Nexi payment status is invalid and will be marked as unknown.',
+            $details->getArrayCopy()
+        );
         $request->markUnknown();
     }
 

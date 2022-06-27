@@ -18,6 +18,7 @@ use Payum\Core\Reply\HttpResponse;
 use Payum\Core\Request\Capture;
 use Payum\Core\Request\GetHttpRequest;
 use Payum\Core\Security\TokenInterface;
+use Psr\Log\LoggerInterface;
 use Sylius\Bundle\PayumBundle\Request\GetStatus;
 use Sylius\Component\Core\Model\CustomerInterface;
 use Sylius\Component\Core\Model\OrderInterface;
@@ -42,7 +43,8 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
     public function __construct(
         private Signer $signer,
         private Checker $checker,
-        private RequestParamsDecoderInterface $decoder
+        private RequestParamsDecoderInterface $decoder,
+        private LoggerInterface $logger
     ) {
     }
 
@@ -55,6 +57,11 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
         $this->api = $api;
     }
 
+    /**
+     * This action handle 2 requests: the POST is the server2server from the payment gateway to sylius
+     * and the GET is from the client browser to sylius.
+     * The latter contains the information to handle the request from the client browser to the payment gateway
+     */
     public function execute($request): void
     {
         RequestNotSupportedException::assertSupports($this, $request);
@@ -65,22 +72,25 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
         /** @var PaymentInterface $payment */
         $payment = $request->getFirstModel();
 
-        $isPost = false;
+        $isS2S = false;
         /** @var array<string, string> $requestParams */
         $requestParams = $httpRequest->query;
         if (count($requestParams) === 0) {
             /** @var array<string, string> $requestParams */
             $requestParams = $httpRequest->request;
-            $isPost = true;
+            $isS2S = true;
         }
 
         $requestParams = $this->decoder->decode($requestParams);
+        $this->logger->debug('Nexi payment request parameters', ['parameter' => $requestParams, 'isS2S' => $isS2S]);
 
         if (isset($requestParams['esito'])) {
             /** @var ArrayObject $details */
             $details = $request->getModel();
+            $this->logger->debug('Nexi payment request details', ['details' => $details, 'isS2S' => $isS2S]);
 
             if ($requestParams['esito'] === Result::OUTCOME_ANNULLO) {
+                $this->logger->notice('Nexi payment status from http request is cancelled.');
                 $details->replace($requestParams);
 
                 return;
@@ -94,7 +104,7 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
             );
             $details->replace($requestParams);
 
-            if ($isPost) {
+            if ($isS2S) {
                 $this->gateway->execute(new GetStatus($payment));
 
                 throw new HttpResponse('200');
@@ -133,6 +143,7 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
         );
 
         $this->signer->sign($nexiRequest, $this->api->getMacKey(), SignatureMethod::SHA1_METHOD);
+        $this->logger->debug('Nexi payment request prepared for the client browser', ['request' => $nexiRequest->getParams()]);
 
         throw new HttpPostRedirect(
             $this->api->getApiEndpoint(),
