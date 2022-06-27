@@ -24,6 +24,7 @@
             <argument type="service" id="webgriffe_sylius_nexi.lib.signer" />
             <argument type="service" id="webgriffe_sylius_nexi.lib.checker" />
             <argument type="service" id="webgriffe_sylius_nexi.decoder.request_params"/>
+            <argument type="service" id="webgriffe_sylius_nexi.logger" />
         </service>
 
         <service id="webgriffe_sylius_nexi.lib.signer" class="Webgriffe\LibQuiPago\Signature\DefaultSigner">
