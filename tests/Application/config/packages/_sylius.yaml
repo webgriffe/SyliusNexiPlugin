@@ -16,3 +16,6 @@ sylius_shop:
 
 sylius_api:
     enabled: true
+
+sylius_api:
+    enabled: true
