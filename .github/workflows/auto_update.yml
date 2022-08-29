@@ -1,0 +1,39 @@
+name: Auto update
+
+on:
+    push:
+        branches-ignore:
+            - 'dependabot/**'
+
+jobs:
+    auto_update:
+        runs-on: ubuntu-22.04
+
+        name: "Auto update"
+
+        steps:
+            -
+                uses: actions/checkout@v3
+                with:
+                    ref: main
+                    token: ${{ github.token }}
+
+            -
+                run: curl https://github.com/Sylius/PluginSkeleton/compare/v1.11.0...1.12.patch -o auto-update.patch
+
+            -
+                run: git apply auto-update.patch --reject --exclude=.github/workflows/build.yml
+                continue-on-error: true
+
+            -
+                run: rm auto-update.patch
+
+            -
+                name: 'Create Pull Request'
+                uses: peter-evans/create-pull-request@v4
+                with:
+                    delete-branch: true
+                    branch: upgrade-with-sylius-plugin-skeleton
+                    base: main
+                    token: ${{ github.token }}
+
