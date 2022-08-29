@@ -1,0 +1,8 @@
+diff a/tests/Application/config/packages/_sylius.yaml b/tests/Application/config/packages/_sylius.yaml	(rejected hunks)
+@@ -13,3 +13,6 @@ parameters:
+ sylius_shop:
+     product_grid:
+         include_all_descendants: true
++
++sylius_api:
++    enabled: true
