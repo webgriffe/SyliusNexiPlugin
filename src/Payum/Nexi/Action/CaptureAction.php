@@ -22,7 +22,9 @@ use Psr\Log\LoggerInterface;
 use Sylius\Bundle\PayumBundle\Request\GetStatus;
 use Sylius\Component\Core\Model\CustomerInterface;
 use Sylius\Component\Core\Model\OrderInterface;
-use Sylius\Component\Core\Model\PaymentInterface;
+use Sylius\Component\Core\Model\PaymentInterface as SyliusPaymentInterface;
+use Sylius\Component\Core\Repository\PaymentRepositoryInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Webgriffe\LibQuiPago\Lists\SignatureMethod;
 use Webgriffe\LibQuiPago\Notification\Request as LibQuiPagoRequest;
 use Webgriffe\LibQuiPago\Notification\Result;
@@ -44,17 +46,11 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
         private Signer $signer,
         private Checker $checker,
         private RequestParamsDecoderInterface $decoder,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
+        private PaymentRepositoryInterface $paymentRepository,
+        private UrlGeneratorInterface $urlGenerator,
     ) {
-    }
-
-    public function setApi($api): void
-    {
-        if (false === $api instanceof Api) {
-            throw new UnsupportedApiException(sprintf('Not supported. Expected %s instance to be set as api.', Api::class));
-        }
-
-        $this->api = $api;
+        $this->apiClass = Api::class;
     }
 
     /**
@@ -69,8 +65,12 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
         $httpRequest = new GetHttpRequest();
         $this->gateway->execute($httpRequest);
 
-        /** @var PaymentInterface $payment */
-        $payment = $request->getFirstModel();
+        /** @var SyliusPaymentInterface $payment */
+        $payment = $request->getModel();
+        if (array_key_exists('esito', $payment->getDetails())) {
+            // Already handled this payment
+            return;
+        }
 
         $isS2S = false;
         /** @var array<string, string> $requestParams */
@@ -82,16 +82,15 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
         }
 
         $requestParams = $this->decoder->decode($requestParams);
-        $this->logger->debug('Nexi payment request parameters', ['parameter' => $requestParams, 'isS2S' => $isS2S]);
+        $requestParams['isS2S'] = $isS2S;
+        $this->logger->debug('Nexi payment request parameters', ['parameter' => $requestParams]);
 
         if (isset($requestParams['esito'])) {
-            /** @var ArrayObject $details */
-            $details = $request->getModel();
-            $this->logger->debug('Nexi payment request details', ['details' => $details, 'isS2S' => $isS2S]);
+            //$this->logger->debug('Nexi payment request details', ['details' => $details, 'isS2S' => $isS2S]);
 
             if ($requestParams['esito'] === Result::OUTCOME_ANNULLO) {
                 $this->logger->notice('Nexi payment status from http request is cancelled.');
-                $details->replace($requestParams);
+                $payment->setDetails($requestParams);
 
                 return;
             }
@@ -102,11 +101,11 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
                 $this->api->getMacKey(),
                 SignatureMethod::SHA1_METHOD
             );
-            $details->replace($requestParams);
+            $payment->setDetails($requestParams);
 
             if ($isS2S) {
                 $this->gateway->execute(new GetStatus($payment));
-
+                $this->paymentRepository->add($payment);
                 throw new HttpResponse('200');
             }
 
@@ -123,6 +122,7 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
 
         Assert::integer($payment->getAmount());
 
+        /** @var TokenInterface $token */
         $token = $request->getToken();
         Assert::isInstanceOf($token, TokenInterface::class);
 
@@ -136,7 +136,11 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
             null,
             $this->mapLocaleCodeToNexiLocaleCode($order->getLocaleCode()),
             // Notify url (server-to-server) can follow the same operations as user callback
-            $token->getTargetUrl(),
+            $this->urlGenerator->generate(
+                'payum_notify_do_unsafe',
+                ['gateway' => 'nexi', 'notify_token' => $token->getHash()],
+                UrlGeneratorInterface::ABSOLUTE_URL
+            ),
             null,
             null,
             '#' . $order->getNumber()
@@ -155,7 +159,7 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
     {
         return
             $request instanceof Capture &&
-            $request->getModel() instanceof \ArrayAccess;
+            $request->getModel() instanceof SyliusPaymentInterface;
     }
 
     private function mapLocaleCodeToNexiLocaleCode(?string $localeCode): string

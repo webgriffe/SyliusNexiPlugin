@@ -25,6 +25,21 @@
             <argument type="service" id="webgriffe_sylius_nexi.lib.checker" />
             <argument type="service" id="webgriffe_sylius_nexi.decoder.request_params"/>
             <argument type="service" id="webgriffe_sylius_nexi.logger" />
+            <argument type="service" id="sylius.repository.payment" />
+            <argument type="service" id="router" />
+            <tag name="payum.action" factory="nexi" alias="payum.action.capture" />
+        </service>
+
+        <service id="webgriffe_sylius_nexi.action.notify" class="Webgriffe\SyliusNexiPlugin\Payum\Nexi\Action\NotifyAction" public="true">
+            <argument type="service" id="webgriffe_sylius_nexi.lib.checker" />
+            <argument type="service" id="webgriffe_sylius_nexi.decoder.request_params"/>
+            <argument type="service" id="webgriffe_sylius_nexi.logger" />
+            <tag name="payum.action" factory="nexi" alias="payum.action.notify" />
+        </service>
+
+        <service id="webgriffe_sylius_nexi.action.notify_null" class="Webgriffe\SyliusNexiPlugin\Payum\Nexi\Action\NotifyNullAction" public="true">
+            <argument type="service" id="webgriffe_sylius_nexi.logger" />
+            <tag name="payum.action" factory="nexi" alias="payum.action.notify_null" />
         </service>
 
         <service id="webgriffe_sylius_nexi.lib.signer" class="Webgriffe\LibQuiPago\Signature\DefaultSigner">
