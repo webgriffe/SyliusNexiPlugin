@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Webgriffe\SyliusNexiPlugin\Payum\Nexi\Action;
 
+use ArrayAccess;
 use GuzzleHttp\Psr7\ServerRequest;
 use Payum\Core\Action\ActionInterface;
 use Payum\Core\ApiAwareInterface;
 use Payum\Core\ApiAwareTrait;
 use Payum\Core\Bridge\Spl\ArrayObject;
 use Payum\Core\Exception\RequestNotSupportedException;
-use Payum\Core\Exception\UnsupportedApiException;
 use Payum\Core\GatewayAwareInterface;
 use Payum\Core\GatewayAwareTrait;
 use Payum\Core\Request\GetHttpRequest;
@@ -23,6 +23,7 @@ use Webgriffe\LibQuiPago\Notification\Result;
 use Webgriffe\LibQuiPago\Signature\Checker;
 use Webgriffe\SyliusNexiPlugin\Decoder\RequestParamsDecoderInterface;
 use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
+use Webmozart\Assert\Assert;
 
 final class NotifyAction implements ActionInterface, ApiAwareInterface, GatewayAwareInterface
 {
@@ -39,30 +40,32 @@ final class NotifyAction implements ActionInterface, ApiAwareInterface, GatewayA
         $this->apiClass = Api::class;
     }
 
-    public function execute($request)
+    public function execute($request): void
     {
         RequestNotSupportedException::assertSupports($this, $request);
 
         $details = ArrayObject::ensureArrayObject($request->getModel());
 
-        $httpRequest = new GetHttpRequest();
-        $this->gateway->execute($httpRequest);
+        // This is needed to populate the http request with GET and POST params from current request
+        $this->gateway->execute($httpRequest = new GetHttpRequest());
 
         /** @var SyliusPaymentInterface $payment */
         $payment = $request->getFirstModel();
+        Assert::isInstanceOf($payment, SyliusPaymentInterface::class);
         if (array_key_exists('esito', $payment->getDetails())) {
             // Already handled this payment
             return;
         }
 
-        /** @var array<string, string> $requestParams */
-        $requestParams = $httpRequest->request;
-        $requestParams = $this->decoder->decode($requestParams);
-        $this->logger->debug('Nexi payment notify request parameters', ['parameters' => $requestParams]);
+        /** @var array<string, string> $parameters */
+        $parameters = $httpRequest->request;
+        // Decode non UTF-8 characters
+        $parameters = $this->decoder->decode($parameters);
+        $this->logger->debug('Nexi payment notify body parameters', ['parameters' => $parameters]);
 
-        if ($requestParams['esito'] === Result::OUTCOME_ANNULLO) {
-            $this->logger->notice('Nexi payment status from http request is cancelled.');
-            $details->replace($requestParams);
+        if ($parameters['esito'] === Result::OUTCOME_ANNULLO) {
+            $this->logger->notice(sprintf('Nexi payment status returned for payment with id "%s" from order with id "%s" is cancelled.', $payment->getId(), $payment->getOrder()->getId()));
+            $details->replace($parameters);
 
             return;
         }
@@ -73,13 +76,13 @@ final class NotifyAction implements ActionInterface, ApiAwareInterface, GatewayA
             $this->api->getMacKey(),
             SignatureMethod::SHA1_METHOD
         );
-        $details->replace($requestParams);
+        $details->replace($parameters);
     }
 
-    public function supports($request)
+    public function supports($request): bool
     {
         return
             $request instanceof Notify &&
-            $request->getModel() instanceof \ArrayAccess;
+            $request->getModel() instanceof ArrayAccess;
     }
 }

@@ -22,37 +22,34 @@ final class NotifyNullAction implements ActionInterface, GatewayAwareInterface
     {
     }
 
-
     /**
-     * {@inheritDoc}
-     *
      * @param $request Notify
      */
-    public function execute($request)
+    public function execute($request): void
     {
         RequestNotSupportedException::assertSupports($this, $request);
 
+        // This is needed to populate the http request with GET and POST params from current request
         $this->gateway->execute($httpRequest = new GetHttpRequest());
 
-        $this->logger->debug('Nexi notify null action request.', ['parameters' => $httpRequest->query]);
+        $this->logger->debug('Nexi notify null action request.', ['queryParameters' => $httpRequest->query]);
 
-        //we are back from be2bill site so we have to just update model.
+        //we are back from Nexi site, so we have to just update model.
         if (empty($httpRequest->query['notify_token'])) {
             throw new HttpResponse('Missing notify_token in Nexi notify request', 400);
         }
 
-        $this->gateway->execute($getToken = new GetToken($httpRequest->query['notify_token']));
-        $this->gateway->execute(new Notify($getToken->getToken()));
+        // Resolve the token
+        $this->gateway->execute($token = new GetToken($httpRequest->query['notify_token']));
+
+        // Execute the capture with the resolved token (the NotifyAction will be called)
+        $this->gateway->execute(new Notify($token->getToken()));
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function supports($request)
+    public function supports($request): bool
     {
         return
             $request instanceof Notify &&
-            null === $request->getModel()
-            ;
+            null === $request->getModel();
     }
 }
