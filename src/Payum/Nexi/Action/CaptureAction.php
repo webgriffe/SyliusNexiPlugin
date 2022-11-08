@@ -8,18 +8,14 @@ use GuzzleHttp\Psr7\ServerRequest;
 use Payum\Core\Action\ActionInterface;
 use Payum\Core\ApiAwareInterface;
 use Payum\Core\ApiAwareTrait;
-use Payum\Core\Bridge\Spl\ArrayObject;
 use Payum\Core\Exception\RequestNotSupportedException;
-use Payum\Core\Exception\UnsupportedApiException;
 use Payum\Core\GatewayAwareInterface;
 use Payum\Core\GatewayAwareTrait;
 use Payum\Core\Reply\HttpPostRedirect;
-use Payum\Core\Reply\HttpResponse;
 use Payum\Core\Request\Capture;
 use Payum\Core\Request\GetHttpRequest;
 use Payum\Core\Security\TokenInterface;
 use Psr\Log\LoggerInterface;
-use Sylius\Bundle\PayumBundle\Request\GetStatus;
 use Sylius\Component\Core\Model\CustomerInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\PaymentInterface as SyliusPaymentInterface;
@@ -54,43 +50,46 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
     }
 
     /**
-     * This action handle 2 requests: the POST is the server2server from the payment gateway to sylius
-     * and the GET is from the client browser to sylius.
-     * The latter contains the information to handle the request from the client browser to the payment gateway
+     * This action is invoked by two main entries: the starting payment procedure and the return back to the store after
+     * a completed, cancelled or failed checkout on Nexi.
      */
     public function execute($request): void
     {
         RequestNotSupportedException::assertSupports($this, $request);
 
-        $httpRequest = new GetHttpRequest();
-        $this->gateway->execute($httpRequest);
+        // This is needed to populate the http request with GET and POST params from current request
+        $this->gateway->execute($httpRequest = new GetHttpRequest());
 
         /** @var SyliusPaymentInterface $payment */
         $payment = $request->getModel();
+        Assert::isInstanceOf($payment, SyliusPaymentInterface::class);
         if (array_key_exists('esito', $payment->getDetails())) {
-            // Already handled this payment
+            // Already captured this payment
             return;
         }
 
-        $isS2S = false;
-        /** @var array<string, string> $requestParams */
-        $requestParams = $httpRequest->query;
-        if (count($requestParams) === 0) {
-            /** @var array<string, string> $requestParams */
-            $requestParams = $httpRequest->request;
-            $isS2S = true;
-        }
+        $order = $payment->getOrder();
+        Assert::isInstanceOf($order, OrderInterface::class);
 
-        $requestParams = $this->decoder->decode($requestParams);
-        $requestParams['isS2S'] = $isS2S;
-        $this->logger->debug('Nexi payment request parameters', ['parameter' => $requestParams]);
+        /** @var array<string, string> $parameters */
+        $parameters = $httpRequest->query;
+        if (count($parameters) > 0) {
+            // It is the request coming back from Nexi after the checkout
 
-        if (isset($requestParams['esito'])) {
-            //$this->logger->debug('Nexi payment request details', ['details' => $details, 'isS2S' => $isS2S]);
+            // Decode non UTF-8 characters
+            $parameters = $this->decoder->decode($parameters);
+            $this->logger->debug('Nexi payment query parameters', ['parameters' => $parameters]);
 
-            if ($requestParams['esito'] === Result::OUTCOME_ANNULLO) {
-                $this->logger->notice('Nexi payment status from http request is cancelled.');
-                $payment->setDetails($requestParams);
+            Assert::keyExists($parameters, 'esito', sprintf('The key "%s" does not exists in the parameters coming back from Nexi, let\'s check the documentation [%s] if something has changed!', 'esito', 'https://ecommerce.nexi.it/specifiche-tecniche/codicebase/introduzione.html'));
+
+            $result = $parameters['esito'];
+            if ($result === Result::OUTCOME_ANNULLO) {
+                $this->logger->notice(sprintf(
+                    'Nexi payment status returned for payment with id "%s" from order with id "%s" is cancelled.',
+                    $payment->getId(),
+                    $order->getId()
+                ));
+                $payment->setDetails($parameters);
 
                 return;
             }
@@ -101,26 +100,18 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
                 $this->api->getMacKey(),
                 SignatureMethod::SHA1_METHOD
             );
-            $payment->setDetails($requestParams);
-
-            if ($isS2S) {
-                $this->gateway->execute(new GetStatus($payment));
-                $this->paymentRepository->add($payment);
-                throw new HttpResponse('200');
-            }
+            $payment->setDetails($parameters);
 
             return;
         }
-
-        $order = $payment->getOrder();
-        Assert::isInstanceOf($order, OrderInterface::class);
 
         $customer = $order->getCustomer();
         Assert::isInstanceOf($customer, CustomerInterface::class);
 
         $transactionCode = $order->getNumber() . '-' . $payment->getId();
 
-        Assert::integer($payment->getAmount());
+        $amount = $payment->getAmount();
+        Assert::integer($amount);
 
         /** @var TokenInterface $token */
         $token = $request->getToken();
@@ -128,14 +119,13 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
 
         $nexiRequest = new Request(
             $this->api->getMerchantAlias(),
-            $payment->getAmount() / 100,
+            $amount / 100,
             $transactionCode,
             $token->getTargetUrl(),
             $customer->getEmail(),
             $token->getTargetUrl(),
             null,
             $this->mapLocaleCodeToNexiLocaleCode($order->getLocaleCode()),
-            // Notify url (server-to-server) can follow the same operations as user callback
             $this->urlGenerator->generate(
                 'payum_notify_do_unsafe',
                 ['gateway' => 'nexi', 'notify_token' => $token->getHash()],
@@ -155,7 +145,7 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
         );
     }
 
-    public function supports($request)
+    public function supports($request): bool
     {
         return
             $request instanceof Capture &&
