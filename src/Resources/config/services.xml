@@ -57,5 +57,7 @@
         <service id="webgriffe_sylius_nexi.factory.request" class="Webgriffe\SyliusNexiPlugin\Factory\RequestFactory">
             <argument type="service" id="router" />
         </service>
+
+        <service id="webgriffe_sylius_nexi.factory.get_http_request" class="Webgriffe\SyliusNexiPlugin\Factory\GetHttpRequestFactory"/>
     </services>
 </container>
