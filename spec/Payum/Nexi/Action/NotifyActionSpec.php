@@ -14,13 +14,16 @@ use Payum\Core\GatewayInterface;
 use Payum\Core\Request\GetHttpRequest;
 use Payum\Core\Request\Notify;
 use PhpSpec\ObjectBehavior;
+use Prophecy\Argument;
 use Psr\Log\LoggerInterface;
 use stdClass;
 use Sylius\Bundle\PayumBundle\Model\PaymentSecurityTokenInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
+use Webgriffe\LibQuiPago\Lists\SignatureMethod;
 use Webgriffe\LibQuiPago\Notification\Result;
 use Webgriffe\LibQuiPago\Signature\Checker;
+use Webgriffe\LibQuiPago\Signature\Signed;
 use Webgriffe\SyliusNexiPlugin\Decoder\RequestParamsDecoderInterface;
 use Webgriffe\SyliusNexiPlugin\Factory\GetHttpRequestFactoryInterface;
 use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Action\NotifyAction;
@@ -109,7 +112,6 @@ final class NotifyActionSpec extends ObjectBehavior
 
     public function it_captures_notify_if_payment_is_canceled(
         PaymentInterface $payment,
-        PaymentSecurityTokenInterface $token,
         LoggerInterface $logger,
         GetHttpRequest $getHttpRequest,
         RequestParamsDecoderInterface $decoder,
@@ -128,6 +130,93 @@ final class NotifyActionSpec extends ObjectBehavior
 
         $logger->notice('Nexi payment status returned for payment with id "2" from order with id "1" is cancelled.')->shouldBeCalledOnce();
         $details->replace([Api::RESULT_FIELD => Result::OUTCOME_ANNULLO])->shouldBeCalledOnce();
+
+        $this->execute($notify)->shouldReturn(null);
+    }
+
+    public function it_captures_notify_if_payment_is_completed(
+        PaymentInterface $payment,
+        LoggerInterface $logger,
+        GetHttpRequest $getHttpRequest,
+        RequestParamsDecoderInterface $decoder,
+        ArrayObject $details,
+        Checker $checker,
+    ): void {
+        $notify = new Notify($payment->getWrappedObject());
+        $notify->setModel($details->getWrappedObject());
+
+        $api = new Api(['sandbox' => false, 'alias' => 'ALIAS_WEB_111111', 'mac_key' => '83Y4TDI8W7Y4EWIY48TWT']);
+        $this->setApi($api);
+
+        $getHttpRequest->request = [Api::RESULT_FIELD => Result::OUTCOME_OK];
+
+        $decoder->decode([Api::RESULT_FIELD => Result::OUTCOME_OK])->shouldBeCalledOnce()->willReturn([Api::RESULT_FIELD => Result::OUTCOME_OK]);
+        $logger->debug('Nexi payment notify body parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_OK]])->shouldBeCalledOnce();
+
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_POST = ['alias' => 'ALIAS_WEB_111111', 'importo' => '15', 'divisa' => 'EUR', 'codTrans' => '000001-1', 'mac' => '123456', 'esito' => 'OK', 'data' => '2022-11-09', 'orario' => '14:41:00'];
+        $checker->checkSignature(Argument::type(Signed::class), '83Y4TDI8W7Y4EWIY48TWT', SignatureMethod::SHA1_METHOD)->shouldBeCalledOnce();
+
+        $logger->info('Nexi payment status returned for payment with id "2" from order with id "1" is "OK".')->shouldBeCalledOnce();
+        $details->replace([Api::RESULT_FIELD => Result::OUTCOME_OK])->shouldBeCalledOnce();
+
+        $this->execute($notify)->shouldReturn(null);
+    }
+
+    public function it_captures_notify_if_payment_is_failed(
+        PaymentInterface $payment,
+        LoggerInterface $logger,
+        GetHttpRequest $getHttpRequest,
+        RequestParamsDecoderInterface $decoder,
+        ArrayObject $details,
+        Checker $checker,
+    ): void {
+        $notify = new Notify($payment->getWrappedObject());
+        $notify->setModel($details->getWrappedObject());
+
+        $api = new Api(['sandbox' => false, 'alias' => 'ALIAS_WEB_111111', 'mac_key' => '83Y4TDI8W7Y4EWIY48TWT']);
+        $this->setApi($api);
+
+        $getHttpRequest->request = [Api::RESULT_FIELD => Result::OUTCOME_KO];
+
+        $decoder->decode([Api::RESULT_FIELD => Result::OUTCOME_KO])->shouldBeCalledOnce()->willReturn([Api::RESULT_FIELD => Result::OUTCOME_KO]);
+        $logger->debug('Nexi payment notify body parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_KO]])->shouldBeCalledOnce();
+
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_POST = ['alias' => 'ALIAS_WEB_111111', 'importo' => '15', 'divisa' => 'EUR', 'codTrans' => '000001-1', 'mac' => '123456', 'esito' => 'OK', 'data' => '2022-11-09', 'orario' => '14:41:00'];
+        $checker->checkSignature(Argument::type(Signed::class), '83Y4TDI8W7Y4EWIY48TWT', SignatureMethod::SHA1_METHOD)->shouldBeCalledOnce();
+
+        $logger->info('Nexi payment status returned for payment with id "2" from order with id "1" is "KO".')->shouldBeCalledOnce();
+        $details->replace([Api::RESULT_FIELD => Result::OUTCOME_KO])->shouldBeCalledOnce();
+
+        $this->execute($notify)->shouldReturn(null);
+    }
+
+    public function it_captures_notify_if_payment_has_error(
+        PaymentInterface $payment,
+        LoggerInterface $logger,
+        GetHttpRequest $getHttpRequest,
+        RequestParamsDecoderInterface $decoder,
+        ArrayObject $details,
+        Checker $checker,
+    ): void {
+        $notify = new Notify($payment->getWrappedObject());
+        $notify->setModel($details->getWrappedObject());
+
+        $api = new Api(['sandbox' => false, 'alias' => 'ALIAS_WEB_111111', 'mac_key' => '83Y4TDI8W7Y4EWIY48TWT']);
+        $this->setApi($api);
+
+        $getHttpRequest->request = [Api::RESULT_FIELD => Result::OUTCOME_ERRORE];
+
+        $decoder->decode([Api::RESULT_FIELD => Result::OUTCOME_ERRORE])->shouldBeCalledOnce()->willReturn([Api::RESULT_FIELD => Result::OUTCOME_ERRORE]);
+        $logger->debug('Nexi payment notify body parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_ERRORE]])->shouldBeCalledOnce();
+
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_POST = ['alias' => 'ALIAS_WEB_111111', 'importo' => '15', 'divisa' => 'EUR', 'codTrans' => '000001-1', 'mac' => '123456', 'esito' => 'OK', 'data' => '2022-11-09', 'orario' => '14:41:00'];
+        $checker->checkSignature(Argument::type(Signed::class), '83Y4TDI8W7Y4EWIY48TWT', SignatureMethod::SHA1_METHOD)->shouldBeCalledOnce();
+
+        $logger->info('Nexi payment status returned for payment with id "2" from order with id "1" is "ERRORE".')->shouldBeCalledOnce();
+        $details->replace([Api::RESULT_FIELD => Result::OUTCOME_ERRORE])->shouldBeCalledOnce();
 
         $this->execute($notify)->shouldReturn(null);
     }
