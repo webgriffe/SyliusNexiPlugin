@@ -19,7 +19,6 @@ use stdClass;
 use Sylius\Bundle\PayumBundle\Model\PaymentSecurityTokenInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
-use Sylius\Component\Core\Repository\PaymentRepositoryInterface;
 use Webgriffe\LibQuiPago\Lists\SignatureMethod;
 use Webgriffe\LibQuiPago\Notification\Result;
 use Webgriffe\LibQuiPago\PaymentInit\Request;
@@ -41,7 +40,6 @@ final class CaptureActionSpec extends ObjectBehavior
         Checker $checker,
         RequestParamsDecoderInterface $decoder,
         LoggerInterface $logger,
-        PaymentRepositoryInterface $paymentRepository,
         PaymentInterface $payment,
         GatewayInterface $gateway,
         OrderInterface $order,
@@ -67,7 +65,6 @@ final class CaptureActionSpec extends ObjectBehavior
             $checker,
             $decoder,
             $logger,
-            $paymentRepository,
             $requestFactory,
             $getHttpRequestFactory,
         );
@@ -179,7 +176,7 @@ final class CaptureActionSpec extends ObjectBehavior
         $getHttpRequest->query = [Api::RESULT_FIELD => Result::OUTCOME_ANNULLO];
 
         $decoder->decode([Api::RESULT_FIELD => Result::OUTCOME_ANNULLO])->shouldBeCalledOnce()->willReturn([Api::RESULT_FIELD => Result::OUTCOME_ANNULLO]);
-        $logger->debug('Nexi payment query parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_ANNULLO]])->shouldBeCalledOnce();
+        $logger->debug('Nexi payment capture parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_ANNULLO]])->shouldBeCalledOnce();
 
         $logger->notice('Nexi payment status returned for payment with id "2" from order with id "1" is cancelled.')->shouldBeCalledOnce();
         $payment->setDetails([Api::RESULT_FIELD => Result::OUTCOME_ANNULLO])->shouldBeCalledOnce();
@@ -204,7 +201,7 @@ final class CaptureActionSpec extends ObjectBehavior
         $getHttpRequest->query = [Api::RESULT_FIELD => Result::OUTCOME_OK];
 
         $decoder->decode([Api::RESULT_FIELD => Result::OUTCOME_OK])->shouldBeCalledOnce()->willReturn([Api::RESULT_FIELD => Result::OUTCOME_OK]);
-        $logger->debug('Nexi payment query parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_OK]])->shouldBeCalledOnce();
+        $logger->debug('Nexi payment capture parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_OK]])->shouldBeCalledOnce();
 
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_POST = ['alias' => 'ALIAS_WEB_111111', 'importo' => '15', 'divisa' => 'EUR', 'codTrans' => '000001-1', 'mac' => '123456', 'esito' => 'OK', 'data' => '2022-11-09', 'orario' => '14:41:00'];
@@ -233,7 +230,7 @@ final class CaptureActionSpec extends ObjectBehavior
         $getHttpRequest->query = [Api::RESULT_FIELD => Result::OUTCOME_KO];
 
         $decoder->decode([Api::RESULT_FIELD => Result::OUTCOME_KO])->shouldBeCalledOnce()->willReturn([Api::RESULT_FIELD => Result::OUTCOME_KO]);
-        $logger->debug('Nexi payment query parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_KO]])->shouldBeCalledOnce();
+        $logger->debug('Nexi payment capture parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_KO]])->shouldBeCalledOnce();
 
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_POST = ['alias' => 'ALIAS_WEB_111111', 'importo' => '15', 'divisa' => 'EUR', 'codTrans' => '000001-1', 'mac' => '123456', 'esito' => 'KO', 'data' => '2022-11-09', 'orario' => '14:41:00'];
@@ -262,7 +259,7 @@ final class CaptureActionSpec extends ObjectBehavior
         $getHttpRequest->query = [Api::RESULT_FIELD => Result::OUTCOME_ERRORE];
 
         $decoder->decode([Api::RESULT_FIELD => Result::OUTCOME_ERRORE])->shouldBeCalledOnce()->willReturn([Api::RESULT_FIELD => Result::OUTCOME_ERRORE]);
-        $logger->debug('Nexi payment query parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_ERRORE]])->shouldBeCalledOnce();
+        $logger->debug('Nexi payment capture parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_ERRORE]])->shouldBeCalledOnce();
 
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_POST = ['alias' => 'ALIAS_WEB_111111', 'importo' => '15', 'divisa' => 'EUR', 'codTrans' => '000001-1', 'mac' => '123456', 'esito' => 'KO', 'data' => '2022-11-09', 'orario' => '14:41:00'];

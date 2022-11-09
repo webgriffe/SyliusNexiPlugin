@@ -25,7 +25,6 @@
             <argument type="service" id="webgriffe_sylius_nexi.lib.checker" />
             <argument type="service" id="webgriffe_sylius_nexi.decoder.request_params"/>
             <argument type="service" id="webgriffe_sylius_nexi.logger" />
-            <argument type="service" id="sylius.repository.payment" />
             <argument type="service" id="webgriffe_sylius_nexi.factory.request" />
             <argument type="service" id="webgriffe_sylius_nexi.factory.get_http_request" />
             <tag name="payum.action" factory="nexi" alias="payum.action.capture" />
