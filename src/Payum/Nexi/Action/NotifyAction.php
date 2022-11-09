@@ -22,6 +22,7 @@ use Webgriffe\LibQuiPago\Notification\Request as LibQuiPagoRequest;
 use Webgriffe\LibQuiPago\Notification\Result;
 use Webgriffe\LibQuiPago\Signature\Checker;
 use Webgriffe\SyliusNexiPlugin\Decoder\RequestParamsDecoderInterface;
+use Webgriffe\SyliusNexiPlugin\Factory\GetHttpRequestFactoryInterface;
 use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
 use Webmozart\Assert\Assert;
 
@@ -36,6 +37,7 @@ final class NotifyAction implements ActionInterface, ApiAwareInterface, GatewayA
         private Checker $checker,
         private RequestParamsDecoderInterface $decoder,
         private LoggerInterface $logger,
+        private GetHttpRequestFactoryInterface $getHttpRequestFactory,
     ) {
         $this->apiClass = Api::class;
     }
@@ -47,12 +49,12 @@ final class NotifyAction implements ActionInterface, ApiAwareInterface, GatewayA
         $details = ArrayObject::ensureArrayObject($request->getModel());
 
         // This is needed to populate the http request with GET and POST params from current request
-        $this->gateway->execute($httpRequest = new GetHttpRequest());
+        $this->gateway->execute($httpRequest = $this->getHttpRequestFactory->create());
 
         /** @var SyliusPaymentInterface $payment */
         $payment = $request->getFirstModel();
         Assert::isInstanceOf($payment, SyliusPaymentInterface::class);
-        if (array_key_exists('esito', $payment->getDetails())) {
+        if (array_key_exists(Api::RESULT_FIELD, $payment->getDetails())) {
             // Already handled this payment
             return;
         }
@@ -63,8 +65,12 @@ final class NotifyAction implements ActionInterface, ApiAwareInterface, GatewayA
         $parameters = $this->decoder->decode($parameters);
         $this->logger->debug('Nexi payment notify body parameters', ['parameters' => $parameters]);
 
-        if ($parameters['esito'] === Result::OUTCOME_ANNULLO) {
-            $this->logger->notice(sprintf('Nexi payment status returned for payment with id "%s" from order with id "%s" is cancelled.', $payment->getId(), $payment->getOrder()->getId()));
+        if ($parameters[Api::RESULT_FIELD] === Result::OUTCOME_ANNULLO) {
+            $this->logger->notice(sprintf(
+                'Nexi payment status returned for payment with id "%s" from order with id "%s" is cancelled.',
+                $payment->getId(),
+                $payment->getOrder()?->getId()
+            ));
             $details->replace($parameters);
 
             return;
