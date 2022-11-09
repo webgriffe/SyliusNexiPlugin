@@ -10,6 +10,7 @@ use Payum\Core\Request\GetStatusInterface;
 use Psr\Log\LoggerInterface;
 use Webgriffe\LibQuiPago\Notification\Result;
 use Sylius\Component\Core\Model\PaymentInterface as SyliusPaymentInterface;
+use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
 
 final class StatusAction implements ActionInterface
 {
@@ -27,45 +28,56 @@ final class StatusAction implements ActionInterface
         $details = $payment->getDetails();
 
         if (count($details) === 0) {
-            $this->logger->warning('HTTP Request has not payment details');
+            $this->logger->warning(sprintf(
+                'Unable to mark the request for payment with id "%s" from order with id "%s": the payment details are empty.',
+                $payment->getId(),
+                $payment->getOrder()?->getId()
+            ));
 
             return;
         }
 
-        if ($details['esito'] === Result::OUTCOME_OK) {
-            $this->logger->info(
-                'Nexi payment status is ok.',
-                $details
-            );
+        $result = $details[Api::RESULT_FIELD];
+        if ($result === Result::OUTCOME_OK) {
+            $this->logger->info(sprintf(
+                'Request captured for payment with id "%s" from order with id "%s".',
+                $payment->getId(),
+                $payment->getOrder()?->getId()
+            ), $details);
             $request->markCaptured();
 
             return;
         }
 
-        if ($details['esito'] === Result::OUTCOME_ANNULLO) {
-            $this->logger->notice(
-                'Nexi payment status is cancelled.',
-                $details
-            );
+        if ($result === Result::OUTCOME_ANNULLO) {
+            $this->logger->notice(sprintf(
+                'Request canceled for payment with id "%s" from order with id "%s".',
+                $payment->getId(),
+                $payment->getOrder()?->getId()
+            ), $details);
             $request->markCanceled();
 
             return;
         }
 
-        if (in_array($details['esito'], [Result::OUTCOME_KO, Result::OUTCOME_ERRORE], true)) {
-            $this->logger->warning(
-                'Nexi payment status is not ok or canceled and will be marked as failed.',
-                $details
-            );
+        if (in_array($result, [Result::OUTCOME_KO, Result::OUTCOME_ERRORE], true)) {
+            $this->logger->warning(sprintf(
+                'Request failed for payment with id "%s" from order with id "%s".',
+                $payment->getId(),
+                $payment->getOrder()?->getId()
+            ), $details);
             $request->markFailed();
 
             return;
         }
-
-        $this->logger->warning(
-            'Nexi payment status is invalid and will be marked as unknown.',
-            $details
-        );
+        $this->logger->warning(sprintf(
+            'Request unknown for payment with id "%s" from order with id "%s". The outcome result is: "%s", the recognized status are "%s". Check the documentation if something is changed: %s.',
+            $payment->getId(),
+            $payment->getOrder()?->getId(),
+            $result,
+            implode(', ', [Result::OUTCOME_OK, Result::OUTCOME_KO, Result::OUTCOME_ERRORE, Result::OUTCOME_ANNULLO]),
+            'https://ecommerce.nexi.it/specifiche-tecniche/codicebase/introduzione.html',
+        ), $details);
         $request->markUnknown();
     }
 
