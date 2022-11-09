@@ -45,7 +45,7 @@ final class NotifyNullAction implements ActionInterface, GatewayAwareInterface
         // Resolve the token
         $this->gateway->execute($token = new GetToken($httpRequest->query['notify_token']));
 
-        // Execute the capture with the resolved token (the NotifyAction will be called)
+        // Execute the payment parameters capture with the resolved token (the NotifyAction will be called)
         $this->gateway->execute(new Notify($token->getToken()));
     }
 

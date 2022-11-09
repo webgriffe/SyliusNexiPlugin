@@ -126,7 +126,7 @@ final class NotifyActionSpec extends ObjectBehavior
         $getHttpRequest->request = [Api::RESULT_FIELD => Result::OUTCOME_ANNULLO];
 
         $decoder->decode([Api::RESULT_FIELD => Result::OUTCOME_ANNULLO])->shouldBeCalledOnce()->willReturn([Api::RESULT_FIELD => Result::OUTCOME_ANNULLO]);
-        $logger->debug('Nexi payment notify body parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_ANNULLO]])->shouldBeCalledOnce();
+        $logger->debug('Nexi payment capture parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_ANNULLO]])->shouldBeCalledOnce();
 
         $logger->notice('Nexi payment status returned for payment with id "2" from order with id "1" is cancelled.')->shouldBeCalledOnce();
         $details->replace([Api::RESULT_FIELD => Result::OUTCOME_ANNULLO])->shouldBeCalledOnce();
@@ -151,7 +151,7 @@ final class NotifyActionSpec extends ObjectBehavior
         $getHttpRequest->request = [Api::RESULT_FIELD => Result::OUTCOME_OK];
 
         $decoder->decode([Api::RESULT_FIELD => Result::OUTCOME_OK])->shouldBeCalledOnce()->willReturn([Api::RESULT_FIELD => Result::OUTCOME_OK]);
-        $logger->debug('Nexi payment notify body parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_OK]])->shouldBeCalledOnce();
+        $logger->debug('Nexi payment capture parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_OK]])->shouldBeCalledOnce();
 
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_POST = ['alias' => 'ALIAS_WEB_111111', 'importo' => '15', 'divisa' => 'EUR', 'codTrans' => '000001-1', 'mac' => '123456', 'esito' => 'OK', 'data' => '2022-11-09', 'orario' => '14:41:00'];
@@ -180,7 +180,7 @@ final class NotifyActionSpec extends ObjectBehavior
         $getHttpRequest->request = [Api::RESULT_FIELD => Result::OUTCOME_KO];
 
         $decoder->decode([Api::RESULT_FIELD => Result::OUTCOME_KO])->shouldBeCalledOnce()->willReturn([Api::RESULT_FIELD => Result::OUTCOME_KO]);
-        $logger->debug('Nexi payment notify body parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_KO]])->shouldBeCalledOnce();
+        $logger->debug('Nexi payment capture parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_KO]])->shouldBeCalledOnce();
 
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_POST = ['alias' => 'ALIAS_WEB_111111', 'importo' => '15', 'divisa' => 'EUR', 'codTrans' => '000001-1', 'mac' => '123456', 'esito' => 'OK', 'data' => '2022-11-09', 'orario' => '14:41:00'];
@@ -209,7 +209,7 @@ final class NotifyActionSpec extends ObjectBehavior
         $getHttpRequest->request = [Api::RESULT_FIELD => Result::OUTCOME_ERRORE];
 
         $decoder->decode([Api::RESULT_FIELD => Result::OUTCOME_ERRORE])->shouldBeCalledOnce()->willReturn([Api::RESULT_FIELD => Result::OUTCOME_ERRORE]);
-        $logger->debug('Nexi payment notify body parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_ERRORE]])->shouldBeCalledOnce();
+        $logger->debug('Nexi payment capture parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_ERRORE]])->shouldBeCalledOnce();
 
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_POST = ['alias' => 'ALIAS_WEB_111111', 'importo' => '15', 'divisa' => 'EUR', 'codTrans' => '000001-1', 'mac' => '123456', 'esito' => 'OK', 'data' => '2022-11-09', 'orario' => '14:41:00'];
