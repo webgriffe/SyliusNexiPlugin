@@ -11,7 +11,9 @@ use Payum\Core\GatewayAwareInterface;
 use Payum\Core\GatewayInterface;
 use Payum\Core\Reply\HttpPostRedirect;
 use Payum\Core\Request\Capture;
+use Payum\Core\Request\GetHttpRequest;
 use PhpSpec\ObjectBehavior;
+use Prophecy\Argument;
 use Psr\Log\LoggerInterface;
 use stdClass;
 use Sylius\Bundle\PayumBundle\Model\PaymentSecurityTokenInterface;
@@ -19,10 +21,13 @@ use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
 use Sylius\Component\Core\Repository\PaymentRepositoryInterface;
 use Webgriffe\LibQuiPago\Lists\SignatureMethod;
+use Webgriffe\LibQuiPago\Notification\Result;
 use Webgriffe\LibQuiPago\PaymentInit\Request;
 use Webgriffe\LibQuiPago\Signature\Checker;
+use Webgriffe\LibQuiPago\Signature\Signed;
 use Webgriffe\LibQuiPago\Signature\Signer;
 use Webgriffe\SyliusNexiPlugin\Decoder\RequestParamsDecoderInterface;
+use Webgriffe\SyliusNexiPlugin\Factory\GetHttpRequestFactoryInterface;
 use Webgriffe\SyliusNexiPlugin\Factory\RequestFactoryInterface;
 use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Action\CaptureAction;
 use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
@@ -42,12 +47,20 @@ final class CaptureActionSpec extends ObjectBehavior
         OrderInterface $order,
         RequestFactoryInterface $requestFactory,
         Request $request,
+        GetHttpRequestFactoryInterface $getHttpRequestFactory,
+        GetHttpRequest $getHttpRequest,
     ): void {
-        $payment->getDetails()->willReturn([]);
+        $order->getId()->willReturn(1);
 
+        $payment->getDetails()->willReturn([]);
+        $payment->getId()->willReturn(2);
         $payment->getOrder()->willReturn($order);
 
         $request->getParams()->willReturn(self::REQUEST_PARAMS);
+
+        $getHttpRequest->query = [];
+
+        $getHttpRequestFactory->create()->willReturn($getHttpRequest);
 
         $this->beConstructedWith(
             $signer,
@@ -56,6 +69,7 @@ final class CaptureActionSpec extends ObjectBehavior
             $logger,
             $paymentRepository,
             $requestFactory,
+            $getHttpRequestFactory,
         );
         $this->setGateway($gateway);
     }
@@ -102,6 +116,30 @@ final class CaptureActionSpec extends ObjectBehavior
         $this->supports(new Capture(new stdClass()))->shouldReturn(false);
     }
 
+    public function it_does_not_capture_request_if_payment_has_been_already_captured(
+        PaymentInterface $payment,
+        PaymentSecurityTokenInterface $token,
+        Signer $signer,
+        Request $request,
+        LoggerInterface $logger,
+        RequestFactoryInterface $requestFactory,
+        OrderInterface $order,
+    ): void {
+        $payment->getDetails()->willReturn(['esito' => 'KO']);
+        $capture = new Capture($token->getWrappedObject());
+        $capture->setModel($payment->getWrappedObject());
+
+        $api = new Api(['sandbox' => false, 'alias' => 'ALIAS_WEB_111111', 'mac_key' => '83Y4TDI8W7Y4EWIY48TWT']);
+        $this->setApi($api);
+
+        $requestFactory->create($api, $order, $payment, $token)->willReturn($request->getWrappedObject())->shouldNotBeCalled();
+
+        $signer->sign($request, '83Y4TDI8W7Y4EWIY48TWT', SignatureMethod::SHA1_METHOD)->shouldNotBeCalled();
+        $logger->debug('Nexi payment request prepared for the client browser', ['request' => self::REQUEST_PARAMS])->shouldNotBeCalled();
+
+        $this->execute($capture)->shouldReturn(null);
+    }
+
     public function it_captures_request_making_an_http_post_redirect_to_nexi_to_start_payment(
         PaymentInterface $payment,
         PaymentSecurityTokenInterface $token,
@@ -125,26 +163,84 @@ final class CaptureActionSpec extends ObjectBehavior
         $this->shouldThrow(HttpPostRedirect::class)->during('execute', [$capture]);
     }
 
-    public function it_does_not_capture_request_if_payment_has_been_already_captured(
+    public function it_captures_request_if_payment_is_canceled(
         PaymentInterface $payment,
         PaymentSecurityTokenInterface $token,
-        Signer $signer,
-        Request $request,
         LoggerInterface $logger,
-        RequestFactoryInterface $requestFactory,
-        OrderInterface $order,
+        GetHttpRequest $getHttpRequest,
+        RequestParamsDecoderInterface $decoder,
     ): void {
-        $payment->getDetails()->willReturn(['esito' => 'KO']);
         $capture = new Capture($token->getWrappedObject());
         $capture->setModel($payment->getWrappedObject());
 
         $api = new Api(['sandbox' => false, 'alias' => 'ALIAS_WEB_111111', 'mac_key' => '83Y4TDI8W7Y4EWIY48TWT']);
         $this->setApi($api);
 
-        $requestFactory->create($api, $order, $payment, $token)->willReturn($request->getWrappedObject())->shouldNotBeCalled();
+        $getHttpRequest->query = [Api::RESULT_FIELD => Result::OUTCOME_ANNULLO];
 
-        $signer->sign($request, '83Y4TDI8W7Y4EWIY48TWT', SignatureMethod::SHA1_METHOD)->shouldNotBeCalled();
-        $logger->debug('Nexi payment request prepared for the client browser', ['request' => self::REQUEST_PARAMS])->shouldNotBeCalled();
+        $decoder->decode([Api::RESULT_FIELD => Result::OUTCOME_ANNULLO])->shouldBeCalledOnce()->willReturn([Api::RESULT_FIELD => Result::OUTCOME_ANNULLO]);
+        $logger->debug('Nexi payment query parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_ANNULLO]])->shouldBeCalledOnce();
+
+        $logger->notice('Nexi payment status returned for payment with id "2" from order with id "1" is cancelled.')->shouldBeCalledOnce();
+        $payment->setDetails([Api::RESULT_FIELD => Result::OUTCOME_ANNULLO])->shouldBeCalledOnce();
+
+        $this->execute($capture)->shouldReturn(null);
+    }
+
+    public function it_captures_request_if_payment_is_completed(
+        PaymentInterface $payment,
+        PaymentSecurityTokenInterface $token,
+        LoggerInterface $logger,
+        GetHttpRequest $getHttpRequest,
+        RequestParamsDecoderInterface $decoder,
+        Checker $checker,
+    ): void {
+        $capture = new Capture($token->getWrappedObject());
+        $capture->setModel($payment->getWrappedObject());
+
+        $api = new Api(['sandbox' => false, 'alias' => 'ALIAS_WEB_111111', 'mac_key' => '83Y4TDI8W7Y4EWIY48TWT']);
+        $this->setApi($api);
+
+        $getHttpRequest->query = [Api::RESULT_FIELD => Result::OUTCOME_OK];
+
+        $decoder->decode([Api::RESULT_FIELD => Result::OUTCOME_OK])->shouldBeCalledOnce()->willReturn([Api::RESULT_FIELD => Result::OUTCOME_OK]);
+        $logger->debug('Nexi payment query parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_OK]])->shouldBeCalledOnce();
+
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_POST = ['alias' => 'ALIAS_WEB_111111', 'importo' => '15', 'divisa' => 'EUR', 'codTrans' => '000001-1', 'mac' => '123456', 'esito' => 'OK', 'data' => '2022-11-09', 'orario' => '14:41:00'];
+        $checker->checkSignature(Argument::type(Signed::class), '83Y4TDI8W7Y4EWIY48TWT', SignatureMethod::SHA1_METHOD)->shouldBeCalledOnce();
+
+        $logger->info('Nexi payment status returned for payment with id "2" from order with id "1" is "OK".')->shouldBeCalledOnce();
+        $payment->setDetails([Api::RESULT_FIELD => Result::OUTCOME_OK])->shouldBeCalledOnce();
+
+        $this->execute($capture)->shouldReturn(null);
+    }
+
+    public function it_captures_request_if_payment_is_failed(
+        PaymentInterface $payment,
+        PaymentSecurityTokenInterface $token,
+        LoggerInterface $logger,
+        GetHttpRequest $getHttpRequest,
+        RequestParamsDecoderInterface $decoder,
+        Checker $checker,
+    ): void {
+        $capture = new Capture($token->getWrappedObject());
+        $capture->setModel($payment->getWrappedObject());
+
+        $api = new Api(['sandbox' => false, 'alias' => 'ALIAS_WEB_111111', 'mac_key' => '83Y4TDI8W7Y4EWIY48TWT']);
+        $this->setApi($api);
+
+        $getHttpRequest->query = [Api::RESULT_FIELD => Result::OUTCOME_KO];
+
+        $decoder->decode([Api::RESULT_FIELD => Result::OUTCOME_KO])->shouldBeCalledOnce()->willReturn([Api::RESULT_FIELD => Result::OUTCOME_KO]);
+        $logger->debug('Nexi payment query parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_KO]])->shouldBeCalledOnce();
+
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_POST = ['alias' => 'ALIAS_WEB_111111', 'importo' => '15', 'divisa' => 'EUR', 'codTrans' => '000001-1', 'mac' => '123456', 'esito' => 'KO', 'data' => '2022-11-09', 'orario' => '14:41:00'];
+        $checker->checkSignature(Argument::type(Signed::class), '83Y4TDI8W7Y4EWIY48TWT', SignatureMethod::SHA1_METHOD)->shouldBeCalledOnce();
+
+        $logger->info('Nexi payment status returned for payment with id "2" from order with id "1" is "KO".')->shouldBeCalledOnce();
+        $payment->setDetails([Api::RESULT_FIELD => Result::OUTCOME_KO])->shouldBeCalledOnce();
 
         $this->execute($capture)->shouldReturn(null);
     }
