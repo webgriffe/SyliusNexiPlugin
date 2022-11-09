@@ -25,6 +25,7 @@ use Webgriffe\LibQuiPago\Notification\Result;
 use Webgriffe\LibQuiPago\Signature\Checker;
 use Webgriffe\LibQuiPago\Signature\Signer;
 use Webgriffe\SyliusNexiPlugin\Decoder\RequestParamsDecoderInterface;
+use Webgriffe\SyliusNexiPlugin\Factory\GetHttpRequestFactoryInterface;
 use Webgriffe\SyliusNexiPlugin\Factory\RequestFactoryInterface;
 use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
 use Webmozart\Assert\Assert;
@@ -43,6 +44,7 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
         private LoggerInterface $logger,
         private PaymentRepositoryInterface $paymentRepository,
         private RequestFactoryInterface $requestFactory,
+        private GetHttpRequestFactoryInterface $getHttpRequestFactory,
     ) {
         $this->apiClass = Api::class;
     }
@@ -56,7 +58,7 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
         RequestNotSupportedException::assertSupports($this, $request);
 
         // This is needed to populate the http request with GET and POST params from current request
-        $this->gateway->execute($httpRequest = new GetHttpRequest());
+        $this->gateway->execute($httpRequest = $this->getHttpRequestFactory->create());
 
         /** @var SyliusPaymentInterface $payment */
         $payment = $request->getModel();
@@ -80,7 +82,7 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
 
             Assert::keyExists($parameters, 'esito', sprintf('The key "%s" does not exists in the parameters coming back from Nexi, let\'s check the documentation [%s] if something has changed!', 'esito', 'https://ecommerce.nexi.it/specifiche-tecniche/codicebase/introduzione.html'));
 
-            $result = $parameters['esito'];
+            $result = $parameters[Api::RESULT_FIELD];
             if ($result === Result::OUTCOME_ANNULLO) {
                 $this->logger->notice(sprintf(
                     'Nexi payment status returned for payment with id "%s" from order with id "%s" is cancelled.',
@@ -98,6 +100,12 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
                 $this->api->getMacKey(),
                 SignatureMethod::SHA1_METHOD
             );
+            $this->logger->info(sprintf(
+                'Nexi payment status returned for payment with id "%s" from order with id "%s" is "%s".',
+                $payment->getId(),
+                $order->getId(),
+                $result,
+            ));
             $payment->setDetails($parameters);
 
             return;
