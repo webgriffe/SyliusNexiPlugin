@@ -40,6 +40,7 @@
 
         <service id="webgriffe_sylius_nexi.action.notify_null" class="Webgriffe\SyliusNexiPlugin\Payum\Nexi\Action\NotifyNullAction" public="true">
             <argument type="service" id="webgriffe_sylius_nexi.logger" />
+            <argument type="service" id="webgriffe_sylius_nexi.factory.get_http_request"/>
             <tag name="payum.action" factory="nexi" alias="payum.action.notify_null" />
         </service>
 
