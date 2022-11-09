@@ -16,18 +16,16 @@ use Payum\Core\Request\Capture;
 use Payum\Core\Request\GetHttpRequest;
 use Payum\Core\Security\TokenInterface;
 use Psr\Log\LoggerInterface;
-use Sylius\Component\Core\Model\CustomerInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\PaymentInterface as SyliusPaymentInterface;
 use Sylius\Component\Core\Repository\PaymentRepositoryInterface;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Webgriffe\LibQuiPago\Lists\SignatureMethod;
 use Webgriffe\LibQuiPago\Notification\Request as LibQuiPagoRequest;
 use Webgriffe\LibQuiPago\Notification\Result;
-use Webgriffe\LibQuiPago\PaymentInit\Request;
 use Webgriffe\LibQuiPago\Signature\Checker;
 use Webgriffe\LibQuiPago\Signature\Signer;
 use Webgriffe\SyliusNexiPlugin\Decoder\RequestParamsDecoderInterface;
+use Webgriffe\SyliusNexiPlugin\Factory\RequestFactoryInterface;
 use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
 use Webmozart\Assert\Assert;
 
@@ -44,7 +42,7 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
         private RequestParamsDecoderInterface $decoder,
         private LoggerInterface $logger,
         private PaymentRepositoryInterface $paymentRepository,
-        private UrlGeneratorInterface $urlGenerator,
+        private RequestFactoryInterface $requestFactory,
     ) {
         $this->apiClass = Api::class;
     }
@@ -104,37 +102,11 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
 
             return;
         }
-
-        $customer = $order->getCustomer();
-        Assert::isInstanceOf($customer, CustomerInterface::class);
-
-        $transactionCode = $order->getNumber() . '-' . $payment->getId();
-
-        $amount = $payment->getAmount();
-        Assert::integer($amount);
-
         /** @var TokenInterface $token */
         $token = $request->getToken();
         Assert::isInstanceOf($token, TokenInterface::class);
 
-        $nexiRequest = new Request(
-            $this->api->getMerchantAlias(),
-            $amount / 100,
-            $transactionCode,
-            $token->getTargetUrl(),
-            $customer->getEmail(),
-            $token->getTargetUrl(),
-            null,
-            $this->mapLocaleCodeToNexiLocaleCode($order->getLocaleCode()),
-            $this->urlGenerator->generate(
-                'payum_notify_do_unsafe',
-                ['gateway' => 'nexi', 'notify_token' => $token->getHash()],
-                UrlGeneratorInterface::ABSOLUTE_URL
-            ),
-            null,
-            null,
-            '#' . $order->getNumber()
-        );
+        $nexiRequest = $this->requestFactory->create($this->api, $order, $payment, $token);
 
         $this->signer->sign($nexiRequest, $this->api->getMacKey(), SignatureMethod::SHA1_METHOD);
         $this->logger->debug('Nexi payment request prepared for the client browser', ['request' => $nexiRequest->getParams()]);
@@ -150,21 +122,5 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
         return
             $request instanceof Capture &&
             $request->getModel() instanceof SyliusPaymentInterface;
-    }
-
-    private function mapLocaleCodeToNexiLocaleCode(?string $localeCode): string
-    {
-        return match (strtolower(substr((string) $localeCode, 0, 2))) {
-            'it' => 'ITA',
-            'es' => 'SPA',
-            'fr' => 'FRA',
-            'de' => 'GER',
-            'ja' => 'JPN',
-            'cn' => 'CHI',
-            'ar' => 'ARA',
-            'ru' => 'RUS',
-            'pt' => 'POR',
-            default => 'ENG',
-        };
     }
 }
