@@ -13,7 +13,6 @@ use Payum\Core\Bridge\Spl\ArrayObject;
 use Payum\Core\Exception\RequestNotSupportedException;
 use Payum\Core\GatewayAwareInterface;
 use Payum\Core\GatewayAwareTrait;
-use Payum\Core\Request\GetHttpRequest;
 use Payum\Core\Request\Notify;
 use Psr\Log\LoggerInterface;
 use Sylius\Component\Core\Model\PaymentInterface as SyliusPaymentInterface;
@@ -65,7 +64,8 @@ final class NotifyAction implements ActionInterface, ApiAwareInterface, GatewayA
         $parameters = $this->decoder->decode($parameters);
         $this->logger->debug('Nexi payment notify body parameters', ['parameters' => $parameters]);
 
-        if ($parameters[Api::RESULT_FIELD] === Result::OUTCOME_ANNULLO) {
+        $result = $parameters[Api::RESULT_FIELD];
+        if ($result === Result::OUTCOME_ANNULLO) {
             $this->logger->notice(sprintf(
                 'Nexi payment status returned for payment with id "%s" from order with id "%s" is cancelled.',
                 $payment->getId(),
@@ -82,6 +82,12 @@ final class NotifyAction implements ActionInterface, ApiAwareInterface, GatewayA
             $this->api->getMacKey(),
             SignatureMethod::SHA1_METHOD
         );
+        $this->logger->info(sprintf(
+            'Nexi payment status returned for payment with id "%s" from order with id "%s" is "%s".',
+            $payment->getId(),
+            $payment->getOrder()?->getId(),
+            $result,
+        ));
         $details->replace($parameters);
     }
 
