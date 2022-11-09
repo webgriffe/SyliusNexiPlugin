@@ -8,38 +8,56 @@ use Payum\Core\Action\ActionInterface;
 use Payum\Core\ApiAwareInterface;
 use Payum\Core\Exception\UnsupportedApiException;
 use Payum\Core\GatewayAwareInterface;
+use Payum\Core\GatewayInterface;
+use Payum\Core\Reply\HttpPostRedirect;
 use Payum\Core\Request\Capture;
 use PhpSpec\ObjectBehavior;
 use Psr\Log\LoggerInterface;
 use stdClass;
+use Sylius\Bundle\PayumBundle\Model\PaymentSecurityTokenInterface;
+use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
 use Sylius\Component\Core\Repository\PaymentRepositoryInterface;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Webgriffe\LibQuiPago\Lists\SignatureMethod;
+use Webgriffe\LibQuiPago\PaymentInit\Request;
 use Webgriffe\LibQuiPago\Signature\Checker;
 use Webgriffe\LibQuiPago\Signature\Signer;
 use Webgriffe\SyliusNexiPlugin\Decoder\RequestParamsDecoderInterface;
+use Webgriffe\SyliusNexiPlugin\Factory\RequestFactoryInterface;
 use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Action\CaptureAction;
 use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
 
 final class CaptureActionSpec extends ObjectBehavior
 {
+    private const REQUEST_PARAMS = ['mac' => '1231231', 'amount' => '15'];
+
     public function let(
         Signer $signer,
         Checker $checker,
         RequestParamsDecoderInterface $decoder,
         LoggerInterface $logger,
         PaymentRepositoryInterface $paymentRepository,
-        UrlGeneratorInterface $urlGenerator,
         PaymentInterface $payment,
+        GatewayInterface $gateway,
+        OrderInterface $order,
+        RequestFactoryInterface $requestFactory,
+        Request $request,
     ): void {
+        $payment->getDetails()->willReturn([]);
+
+        $payment->getOrder()->willReturn($order);
+
+        $request->getParams()->willReturn(self::REQUEST_PARAMS);
+
         $this->beConstructedWith(
             $signer,
             $checker,
             $decoder,
             $logger,
             $paymentRepository,
-            $urlGenerator,
+            $requestFactory,
         );
+        $this->setGateway($gateway);
     }
 
     public function it_is_initializable(): void
@@ -82,5 +100,52 @@ final class CaptureActionSpec extends ObjectBehavior
     public function it_should_not_support_capture_requests_having_other_models(): void
     {
         $this->supports(new Capture(new stdClass()))->shouldReturn(false);
+    }
+
+    public function it_captures_request_making_an_http_post_redirect_to_nexi_to_start_payment(
+        PaymentInterface $payment,
+        PaymentSecurityTokenInterface $token,
+        Signer $signer,
+        Request $request,
+        LoggerInterface $logger,
+        RequestFactoryInterface $requestFactory,
+        OrderInterface $order,
+    ): void {
+        $capture = new Capture($token->getWrappedObject());
+        $capture->setModel($payment->getWrappedObject());
+
+        $api = new Api(['sandbox' => false, 'alias' => 'ALIAS_WEB_111111', 'mac_key' => '83Y4TDI8W7Y4EWIY48TWT']);
+        $this->setApi($api);
+
+        $requestFactory->create($api, $order, $payment, $token)->willReturn($request->getWrappedObject())->shouldBeCalledOnce();
+
+        $signer->sign($request, '83Y4TDI8W7Y4EWIY48TWT', SignatureMethod::SHA1_METHOD)->shouldBeCalledOnce();
+        $logger->debug('Nexi payment request prepared for the client browser', ['request' => self::REQUEST_PARAMS])->shouldBeCalledOnce();
+
+        $this->shouldThrow(HttpPostRedirect::class)->during('execute', [$capture]);
+    }
+
+    public function it_does_not_capture_request_if_payment_has_been_already_captured(
+        PaymentInterface $payment,
+        PaymentSecurityTokenInterface $token,
+        Signer $signer,
+        Request $request,
+        LoggerInterface $logger,
+        RequestFactoryInterface $requestFactory,
+        OrderInterface $order,
+    ): void {
+        $payment->getDetails()->willReturn(['esito' => 'KO']);
+        $capture = new Capture($token->getWrappedObject());
+        $capture->setModel($payment->getWrappedObject());
+
+        $api = new Api(['sandbox' => false, 'alias' => 'ALIAS_WEB_111111', 'mac_key' => '83Y4TDI8W7Y4EWIY48TWT']);
+        $this->setApi($api);
+
+        $requestFactory->create($api, $order, $payment, $token)->willReturn($request->getWrappedObject())->shouldNotBeCalled();
+
+        $signer->sign($request, '83Y4TDI8W7Y4EWIY48TWT', SignatureMethod::SHA1_METHOD)->shouldNotBeCalled();
+        $logger->debug('Nexi payment request prepared for the client browser', ['request' => self::REQUEST_PARAMS])->shouldNotBeCalled();
+
+        $this->execute($capture)->shouldReturn(null);
     }
 }
