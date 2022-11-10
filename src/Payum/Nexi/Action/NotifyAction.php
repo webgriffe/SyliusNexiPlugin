@@ -12,6 +12,7 @@ use Payum\Core\Request\Notify;
 use Psr\Log\LoggerInterface;
 use Sylius\Component\Core\Model\PaymentInterface as SyliusPaymentInterface;
 use Webgriffe\LibQuiPago\Signature\Checker;
+use Webgriffe\LibQuiPago\Signature\InvalidMacException;
 use Webgriffe\SyliusNexiPlugin\Decoder\RequestParamsDecoderInterface;
 use Webgriffe\SyliusNexiPlugin\Factory\GetHttpRequestFactoryInterface;
 use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
@@ -32,10 +33,19 @@ final class NotifyAction extends AbstractCaptureAction
     }
 
     /**
+     * This action is invoked by Nexi with the Server2Server POST notify. Previously we have
+     * to pass between the NotifyNullAction to resolve the Payment Token.
+     * The purpose of this action is to capture the POST Nexi parameters and store them in the
+     * ArrayObject details. We don't have to store the details in the payment details property
+     * because is the Payum\Core\Action\ExecuteSameRequestWithModelDetailsAction to store them
+     * in the main model.
+     *
      * @psalm-suppress MoreSpecificImplementedParamType
      * @phpstan-ignore-next-line
      *
      * @param Notify&Generic $request
+     *
+     * @throws InvalidMacException
      */
     public function execute($request): void
     {

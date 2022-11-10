@@ -14,6 +14,7 @@ use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\PaymentInterface as SyliusPaymentInterface;
 use Webgriffe\LibQuiPago\Lists\SignatureMethod;
 use Webgriffe\LibQuiPago\Signature\Checker;
+use Webgriffe\LibQuiPago\Signature\InvalidMacException;
 use Webgriffe\LibQuiPago\Signature\Signer;
 use Webgriffe\SyliusNexiPlugin\Decoder\RequestParamsDecoderInterface;
 use Webgriffe\SyliusNexiPlugin\Factory\GetHttpRequestFactoryInterface;
@@ -39,12 +40,15 @@ final class CaptureAction extends AbstractCaptureAction
 
     /**
      * This action is invoked by two main entries: the starting payment procedure and the return back to the store after
-     * a completed, cancelled or failed checkout on Nexi.
+     * a completed, cancelled or failed checkout on Nexi. The purpose of this action is also to capture the payment
+     * parameters if the Server2Server POST notify is not yat arrived.
      *
      * @psalm-suppress MoreSpecificImplementedParamType
      * @phpstan-ignore-next-line
      *
      * @param Capture&Generic $request
+     *
+     * @throws InvalidMacException
      */
     public function execute($request): void
     {
