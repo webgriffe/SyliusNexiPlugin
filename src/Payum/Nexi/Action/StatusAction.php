@@ -21,6 +21,12 @@ final class StatusAction implements ActionInterface
     }
 
     /**
+     * This action is invoked by the capture route that redirect the user to the after pay route.
+     * Here we can suppose that the payment procedure has been completed and that the parameters
+     * are stored in the payment details property. So we have to say to the request which is the state.
+     * After this execute, the Sylius\Bundle\PayumBundle\Extension\UpdatePaymentStateExtension::onPostExecute
+     * method will be executed and the payment state will change, if needed.
+     *
      * @psalm-suppress MoreSpecificImplementedParamType
      * @phpstan-ignore-next-line
      *

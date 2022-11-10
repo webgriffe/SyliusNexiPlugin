@@ -29,6 +29,11 @@ final class NotifyNullAction implements ActionInterface, GatewayAwareInterface
     }
 
     /**
+     * This action is invoked by Nexi with the Server2Server POST notify. We have to use the route
+     * notify unsafe because, otherwise, the notify url and the target url must be the same routes.
+     * The purpose of this action is to retrieve the payment token from the hash of the payment in
+     * the query parameter. See Payum\Be2Bill\Action\NotifyNullAction to have a look to another example.
+     *
      * @psalm-suppress MoreSpecificImplementedParamType
      * @phpstan-ignore-next-line
      *
