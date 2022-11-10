@@ -64,9 +64,10 @@ abstract class AbstractCaptureAction implements ActionInterface, ApiAwareInterfa
         $result = (string) $requestParams[Api::RESULT_FIELD];
         if ($result === Result::OUTCOME_ANNULLO || $result === Result::OUTCOME_ERRORE) {
             $this->logger->notice(sprintf(
-                'Nexi payment status returned for payment with id "%s" from order with id "%s" is cancelled.',
+                'Nexi payment status returned for payment with id "%s" from order with id "%s" is "%s".',
                 (string) $payment->getId(),
-                (string) $payment->getOrder()?->getId()
+                (string) $payment->getOrder()?->getId(),
+                $result,
             ));
             $this->storeRequestParametersInModel($model, $requestParams);
 
