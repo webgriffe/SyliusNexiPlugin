@@ -99,7 +99,8 @@ final class CaptureActionSpec extends ObjectBehavior
     public function it_should_not_accept_other_apis(): void
     {
         $this->shouldThrow(UnsupportedApiException::class)->during(
-            'setApi', [new stdClass()]
+            'setApi',
+            [new stdClass()]
         );
     }
 
