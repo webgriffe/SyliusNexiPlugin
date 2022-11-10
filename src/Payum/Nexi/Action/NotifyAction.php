@@ -33,6 +33,7 @@ final class NotifyAction extends AbstractCaptureAction
 
     /**
      * @psalm-suppress MoreSpecificImplementedParamType
+     *
      * @param Notify&Generic $request
      */
     public function execute($request): void

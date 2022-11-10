@@ -8,7 +8,6 @@ use Payum\Core\Exception\RequestNotSupportedException;
 use Payum\Core\Reply\HttpPostRedirect;
 use Payum\Core\Request\Capture;
 use Payum\Core\Request\Generic;
-use Payum\Core\Request\Notify;
 use Payum\Core\Security\TokenInterface;
 use Psr\Log\LoggerInterface;
 use Sylius\Component\Core\Model\OrderInterface;
@@ -43,6 +42,7 @@ final class CaptureAction extends AbstractCaptureAction
      * a completed, cancelled or failed checkout on Nexi.
      *
      * @psalm-suppress MoreSpecificImplementedParamType
+     *
      * @param Capture&Generic $request
      */
     public function execute($request): void
