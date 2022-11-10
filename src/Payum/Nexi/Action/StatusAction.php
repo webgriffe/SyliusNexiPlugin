@@ -22,6 +22,7 @@ final class StatusAction implements ActionInterface
 
     /**
      * @psalm-suppress MoreSpecificImplementedParamType
+     *
      * @param GetStatusInterface&Generic $request
      */
     public function execute($request): void

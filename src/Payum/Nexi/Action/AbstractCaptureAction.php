@@ -31,6 +31,7 @@ abstract class AbstractCaptureAction implements ActionInterface, ApiAwareInterfa
 
     /**
      * @psalm-suppress NonInvariantDocblockPropertyType
+     *
      * @var Api
      */
     protected $api;

@@ -10,7 +10,6 @@ use Payum\Core\GatewayAwareInterface;
 use Payum\Core\GatewayAwareTrait;
 use Payum\Core\Reply\HttpResponse;
 use Payum\Core\Request\Generic;
-use Payum\Core\Request\GetStatusInterface;
 use Payum\Core\Request\GetToken;
 use Payum\Core\Request\Notify;
 use Psr\Log\LoggerInterface;
@@ -31,6 +30,7 @@ final class NotifyNullAction implements ActionInterface, GatewayAwareInterface
 
     /**
      * @psalm-suppress MoreSpecificImplementedParamType
+     *
      * @param Notify&Generic $request
      */
     public function execute($request): void
