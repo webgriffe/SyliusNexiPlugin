@@ -36,7 +36,7 @@ final class NotifyAction extends AbstractCaptureAction
         // This is needed to populate the http request with GET and POST params from current request
         $this->gateway->execute($httpRequest = $this->getHttpRequestFactory->create());
 
-        /** @var SyliusPaymentInterface $payment */
+        /** @var SyliusPaymentInterface|mixed $payment */
         $payment = $request->getFirstModel();
         Assert::isInstanceOf($payment, SyliusPaymentInterface::class);
         if (array_key_exists(Api::RESULT_FIELD, $payment->getDetails())) {
