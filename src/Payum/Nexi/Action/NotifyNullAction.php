@@ -9,11 +9,16 @@ use Payum\Core\Exception\RequestNotSupportedException;
 use Payum\Core\GatewayAwareInterface;
 use Payum\Core\GatewayAwareTrait;
 use Payum\Core\Reply\HttpResponse;
+use Payum\Core\Request\Generic;
+use Payum\Core\Request\GetStatusInterface;
 use Payum\Core\Request\GetToken;
 use Payum\Core\Request\Notify;
 use Psr\Log\LoggerInterface;
 use Webgriffe\SyliusNexiPlugin\Factory\GetHttpRequestFactoryInterface;
 
+/**
+ * @psalm-suppress PropertyNotSetInConstructor
+ */
 final class NotifyNullAction implements ActionInterface, GatewayAwareInterface
 {
     use GatewayAwareTrait;
@@ -24,6 +29,10 @@ final class NotifyNullAction implements ActionInterface, GatewayAwareInterface
     ) {
     }
 
+    /**
+     * @psalm-suppress MoreSpecificImplementedParamType
+     * @param Notify&Generic $request
+     */
     public function execute($request): void
     {
         RequestNotSupportedException::assertSupports($this, $request);
@@ -39,7 +48,7 @@ final class NotifyNullAction implements ActionInterface, GatewayAwareInterface
         }
 
         // Resolve the token
-        $this->gateway->execute($token = new GetToken($httpRequest->query['notify_token']));
+        $this->gateway->execute($token = new GetToken((string) $httpRequest->query['notify_token']));
 
         // Execute the payment parameters capture with the resolved token (the NotifyAction will be called)
         $this->gateway->execute(new Notify($token->getToken()));

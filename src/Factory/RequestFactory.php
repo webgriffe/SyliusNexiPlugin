@@ -25,7 +25,7 @@ final class RequestFactory implements RequestFactoryInterface
         $customer = $order->getCustomer();
         Assert::isInstanceOf($customer, CustomerInterface::class);
 
-        $transactionCode = $order->getNumber() . '-' . $payment->getId();
+        $transactionCode = (string) $order->getNumber() . '-' . (string) $payment->getId();
 
         $amount = $payment->getAmount();
         Assert::integer($amount);
@@ -46,7 +46,7 @@ final class RequestFactory implements RequestFactoryInterface
             ),
             null,
             null,
-            '#' . $order->getNumber()
+            '#' . (string) $order->getNumber()
         );
     }
 
