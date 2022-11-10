@@ -44,7 +44,7 @@ final class CaptureAction extends AbstractCaptureAction
         // This is needed to populate the http request with GET and POST params from current request
         $this->gateway->execute($httpRequest = $this->getHttpRequestFactory->create());
 
-        /** @var SyliusPaymentInterface $payment */
+        /** @var SyliusPaymentInterface|mixed $payment */
         $payment = $request->getModel();
         Assert::isInstanceOf($payment, SyliusPaymentInterface::class);
         if (array_key_exists(Api::RESULT_FIELD, $payment->getDetails())) {
@@ -63,7 +63,7 @@ final class CaptureAction extends AbstractCaptureAction
         $order = $payment->getOrder();
         Assert::isInstanceOf($order, OrderInterface::class);
 
-        /** @var TokenInterface $token */
+        /** @var TokenInterface|null $token */
         $token = $request->getToken();
         Assert::isInstanceOf($token, TokenInterface::class);
 

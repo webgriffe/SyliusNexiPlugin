@@ -24,9 +24,6 @@ final class NotifyNullAction implements ActionInterface, GatewayAwareInterface
     ) {
     }
 
-    /**
-     * @param $request Notify
-     */
     public function execute($request): void
     {
         RequestNotSupportedException::assertSupports($this, $request);
@@ -37,7 +34,7 @@ final class NotifyNullAction implements ActionInterface, GatewayAwareInterface
         $this->logger->debug('Nexi notify null action request.', ['queryParameters' => $httpRequest->query]);
 
         //we are back from Nexi site, so we have to just update model.
-        if (empty($httpRequest->query['notify_token'])) {
+        if (!array_key_exists('notify_token', $httpRequest->query) || $httpRequest->query['notify_token'] === '' || $httpRequest->query['notify_token'] === null) {
             throw new HttpResponse('Missing notify_token in Nexi notify request', 400);
         }
 

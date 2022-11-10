@@ -85,6 +85,7 @@ final class StatusAction implements ActionInterface
     {
         return
             $request instanceof GetStatusInterface &&
+            method_exists($request, 'getFirstModel') &&
             $request->getFirstModel() instanceof SyliusPaymentInterface;
     }
 }
