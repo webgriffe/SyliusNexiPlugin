@@ -8,8 +8,8 @@ use Payum\Core\Action\ActionInterface;
 use Payum\Core\Exception\RequestNotSupportedException;
 use Payum\Core\Request\GetStatusInterface;
 use Psr\Log\LoggerInterface;
-use Webgriffe\LibQuiPago\Notification\Result;
 use Sylius\Component\Core\Model\PaymentInterface as SyliusPaymentInterface;
+use Webgriffe\LibQuiPago\Notification\Result;
 use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
 
 final class StatusAction implements ActionInterface

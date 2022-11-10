@@ -24,18 +24,18 @@ final class RequestParamsDecoderSpec extends ObjectBehavior
     {
         $this->decode([
             'nome' => mb_convert_encoding('Fábien', 'ISO-8859-1', 'UTF-8'),
-            "cognome" => mb_convert_encoding('Potencier', 'ISO-8859-1', 'UTF-8'),
-            "data" => "20220530",
-            "descrizione" => "#000000068",
-            "divisa" => mb_convert_encoding('EUR', 'ISO-8859-1', 'UTF-8'),
-            "esito" => "OK",
+            'cognome' => mb_convert_encoding('Potencier', 'ISO-8859-1', 'UTF-8'),
+            'data' => '20220530',
+            'descrizione' => '#000000068',
+            'divisa' => mb_convert_encoding('EUR', 'ISO-8859-1', 'UTF-8'),
+            'esito' => 'OK',
         ])->shouldReturn([
-            "nome" => 'Fábien',
-            "cognome" => "Potencier",
-            "data" => "20220530",
-            "descrizione" => "#000000068",
-            "divisa" => "EUR",
-            "esito" => "OK",
+            'nome' => 'Fábien',
+            'cognome' => 'Potencier',
+            'data' => '20220530',
+            'descrizione' => '#000000068',
+            'divisa' => 'EUR',
+            'esito' => 'OK',
         ]);
     }
 }

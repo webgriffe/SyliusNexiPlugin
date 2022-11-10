@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace spec\Webgriffe\SyliusNexiPlugin\Factory;
 
 use Payum\Core\Request\GetHttpRequest;
-use Webgriffe\SyliusNexiPlugin\Factory\GetHttpRequestFactory;
 use PhpSpec\ObjectBehavior;
+use Webgriffe\SyliusNexiPlugin\Factory\GetHttpRequestFactory;
 use Webgriffe\SyliusNexiPlugin\Factory\GetHttpRequestFactoryInterface;
 
 class GetHttpRequestFactorySpec extends ObjectBehavior

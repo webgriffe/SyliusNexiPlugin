@@ -17,7 +17,6 @@ use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 use Psr\Log\LoggerInterface;
 use stdClass;
-use Sylius\Bundle\PayumBundle\Model\PaymentSecurityTokenInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
 use Webgriffe\LibQuiPago\Lists\SignatureMethod;
@@ -86,7 +85,8 @@ final class NotifyActionSpec extends ObjectBehavior
     public function it_should_not_accept_other_apis(): void
     {
         $this->shouldThrow(UnsupportedApiException::class)->during(
-            'setApi', [new stdClass()]
+            'setApi',
+            [new stdClass()]
         );
     }
 

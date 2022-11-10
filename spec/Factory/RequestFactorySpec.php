@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace spec\Webgriffe\SyliusNexiPlugin\Factory;
 
 use Payum\Core\Security\TokenInterface;
+use PhpSpec\ObjectBehavior;
 use Sylius\Component\Core\Model\CustomerInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Webgriffe\LibQuiPago\PaymentInit\Request;
 use Webgriffe\SyliusNexiPlugin\Factory\RequestFactory;
-use PhpSpec\ObjectBehavior;
 use Webgriffe\SyliusNexiPlugin\Factory\RequestFactoryInterface;
 use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
 
@@ -59,8 +59,7 @@ class RequestFactorySpec extends ObjectBehavior
         OrderInterface $order,
         PaymentInterface $payment,
         TokenInterface $token,
-    ): void
-    {
+    ): void {
         $this->create(
             new Api(['sandbox' => false, 'alias' => 'ALIAS_WEB_111111', 'mac_key' => '83Y4TDI8W7Y4EWIY48TWT']),
             $order,

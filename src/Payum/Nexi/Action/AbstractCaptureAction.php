@@ -83,5 +83,4 @@ abstract class AbstractCaptureAction implements ActionInterface, ApiAwareInterfa
         }
         $model->setDetails($parameters);
     }
-
 }
