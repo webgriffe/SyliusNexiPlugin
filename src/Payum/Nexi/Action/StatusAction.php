@@ -22,6 +22,7 @@ final class StatusAction implements ActionInterface
 
     /**
      * @psalm-suppress MoreSpecificImplementedParamType
+     * @phpstan-ignore-next-line
      *
      * @param GetStatusInterface&Generic $request
      */

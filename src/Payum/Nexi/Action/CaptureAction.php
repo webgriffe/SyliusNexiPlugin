@@ -42,6 +42,7 @@ final class CaptureAction extends AbstractCaptureAction
      * a completed, cancelled or failed checkout on Nexi.
      *
      * @psalm-suppress MoreSpecificImplementedParamType
+     * @phpstan-ignore-next-line
      *
      * @param Capture&Generic $request
      */

@@ -30,6 +30,7 @@ final class NotifyNullAction implements ActionInterface, GatewayAwareInterface
 
     /**
      * @psalm-suppress MoreSpecificImplementedParamType
+     * @phpstan-ignore-next-line
      *
      * @param Notify&Generic $request
      */
