@@ -179,8 +179,32 @@ final class CaptureActionSpec extends ObjectBehavior
         $decoder->decode([Api::RESULT_FIELD => Result::OUTCOME_ANNULLO])->shouldBeCalledOnce()->willReturn([Api::RESULT_FIELD => Result::OUTCOME_ANNULLO]);
         $logger->debug('Nexi payment capture parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_ANNULLO]])->shouldBeCalledOnce();
 
-        $logger->notice('Nexi payment status returned for payment with id "2" from order with id "1" is cancelled.')->shouldBeCalledOnce();
+        $logger->notice('Nexi payment status returned for payment with id "2" from order with id "1" is "ANNULLO".')->shouldBeCalledOnce();
         $payment->setDetails([Api::RESULT_FIELD => Result::OUTCOME_ANNULLO])->shouldBeCalledOnce();
+
+        $this->execute($capture)->shouldReturn(null);
+    }
+
+    public function it_captures_request_if_payment_has_error(
+        PaymentInterface $payment,
+        PaymentSecurityTokenInterface $token,
+        LoggerInterface $logger,
+        GetHttpRequest $getHttpRequest,
+        RequestParamsDecoderInterface $decoder,
+    ): void {
+        $capture = new Capture($token->getWrappedObject());
+        $capture->setModel($payment->getWrappedObject());
+
+        $api = new Api(['sandbox' => false, 'alias' => 'ALIAS_WEB_111111', 'mac_key' => '83Y4TDI8W7Y4EWIY48TWT']);
+        $this->setApi($api);
+
+        $getHttpRequest->query = [Api::RESULT_FIELD => Result::OUTCOME_ERRORE];
+
+        $decoder->decode([Api::RESULT_FIELD => Result::OUTCOME_ERRORE])->shouldBeCalledOnce()->willReturn([Api::RESULT_FIELD => Result::OUTCOME_ERRORE]);
+        $logger->debug('Nexi payment capture parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_ERRORE]])->shouldBeCalledOnce();
+
+        $logger->notice('Nexi payment status returned for payment with id "2" from order with id "1" is "ERRORE".')->shouldBeCalledOnce();
+        $payment->setDetails([Api::RESULT_FIELD => Result::OUTCOME_ERRORE])->shouldBeCalledOnce();
 
         $this->execute($capture)->shouldReturn(null);
     }
@@ -239,35 +263,6 @@ final class CaptureActionSpec extends ObjectBehavior
 
         $logger->info('Nexi payment status returned for payment with id "2" from order with id "1" is "KO".')->shouldBeCalledOnce();
         $payment->setDetails([Api::RESULT_FIELD => Result::OUTCOME_KO])->shouldBeCalledOnce();
-
-        $this->execute($capture)->shouldReturn(null);
-    }
-
-    public function it_captures_request_if_payment_has_error(
-        PaymentInterface $payment,
-        PaymentSecurityTokenInterface $token,
-        LoggerInterface $logger,
-        GetHttpRequest $getHttpRequest,
-        RequestParamsDecoderInterface $decoder,
-        Checker $checker,
-    ): void {
-        $capture = new Capture($token->getWrappedObject());
-        $capture->setModel($payment->getWrappedObject());
-
-        $api = new Api(['sandbox' => false, 'alias' => 'ALIAS_WEB_111111', 'mac_key' => '83Y4TDI8W7Y4EWIY48TWT']);
-        $this->setApi($api);
-
-        $getHttpRequest->query = [Api::RESULT_FIELD => Result::OUTCOME_ERRORE];
-
-        $decoder->decode([Api::RESULT_FIELD => Result::OUTCOME_ERRORE])->shouldBeCalledOnce()->willReturn([Api::RESULT_FIELD => Result::OUTCOME_ERRORE]);
-        $logger->debug('Nexi payment capture parameters', ['parameters' => [Api::RESULT_FIELD => Result::OUTCOME_ERRORE]])->shouldBeCalledOnce();
-
-        $_SERVER['REQUEST_METHOD'] = 'POST';
-        $_POST = ['alias' => 'ALIAS_WEB_111111', 'importo' => '15', 'divisa' => 'EUR', 'codTrans' => '000001-1', 'mac' => '123456', 'esito' => 'KO', 'data' => '2022-11-09', 'orario' => '14:41:00'];
-        $checker->checkSignature(Argument::type(Signed::class), '83Y4TDI8W7Y4EWIY48TWT', SignatureMethod::SHA1_METHOD)->shouldBeCalledOnce();
-
-        $logger->info('Nexi payment status returned for payment with id "2" from order with id "1" is "ERRORE".')->shouldBeCalledOnce();
-        $payment->setDetails([Api::RESULT_FIELD => Result::OUTCOME_ERRORE])->shouldBeCalledOnce();
 
         $this->execute($capture)->shouldReturn(null);
     }
