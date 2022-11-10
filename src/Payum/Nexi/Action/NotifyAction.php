@@ -7,6 +7,7 @@ namespace Webgriffe\SyliusNexiPlugin\Payum\Nexi\Action;
 use ArrayAccess;
 use Payum\Core\Bridge\Spl\ArrayObject;
 use Payum\Core\Exception\RequestNotSupportedException;
+use Payum\Core\Request\Generic;
 use Payum\Core\Request\Notify;
 use Psr\Log\LoggerInterface;
 use Sylius\Component\Core\Model\PaymentInterface as SyliusPaymentInterface;
@@ -16,6 +17,9 @@ use Webgriffe\SyliusNexiPlugin\Factory\GetHttpRequestFactoryInterface;
 use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
 use Webmozart\Assert\Assert;
 
+/**
+ * @psalm-suppress PropertyNotSetInConstructor
+ */
 final class NotifyAction extends AbstractCaptureAction
 {
     public function __construct(
@@ -27,6 +31,10 @@ final class NotifyAction extends AbstractCaptureAction
         parent::__construct($checker, $decoder, $logger);
     }
 
+    /**
+     * @psalm-suppress MoreSpecificImplementedParamType
+     * @param Notify&Generic $request
+     */
     public function execute($request): void
     {
         RequestNotSupportedException::assertSupports($this, $request);

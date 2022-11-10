@@ -17,15 +17,22 @@ use Webgriffe\LibQuiPago\Lists\SignatureMethod;
 use Webgriffe\LibQuiPago\Notification\Request as LibQuiPagoRequest;
 use Webgriffe\LibQuiPago\Notification\Result;
 use Webgriffe\LibQuiPago\Signature\Checker;
+use Webgriffe\LibQuiPago\Signature\InvalidMacException;
 use Webgriffe\SyliusNexiPlugin\Decoder\RequestParamsDecoderInterface;
 use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
 use Webmozart\Assert\Assert;
 
+/**
+ * @psalm-suppress PropertyNotSetInConstructor
+ */
 abstract class AbstractCaptureAction implements ActionInterface, ApiAwareInterface, GatewayAwareInterface
 {
     use GatewayAwareTrait, ApiAwareTrait;
 
-    /** @var Api */
+    /**
+     * @psalm-suppress NonInvariantDocblockPropertyType
+     * @var Api
+     */
     protected $api;
 
     public function __construct(
@@ -36,6 +43,11 @@ abstract class AbstractCaptureAction implements ActionInterface, ApiAwareInterfa
         $this->apiClass = Api::class;
     }
 
+    /**
+     * @param array<string, string> $requestParams
+     *
+     * @throws InvalidMacException
+     */
     protected function capturePaymentDetailsFromRequestParameters(ArrayObject|PaymentInterface $model, PaymentInterface $payment, array $requestParams): void
     {
         // Decode non UTF-8 characters
@@ -48,12 +60,12 @@ abstract class AbstractCaptureAction implements ActionInterface, ApiAwareInterfa
             'https://ecommerce.nexi.it/specifiche-tecniche/codicebase/introduzione.html'
         ));
 
-        $result = $requestParams[Api::RESULT_FIELD];
+        $result = (string) $requestParams[Api::RESULT_FIELD];
         if ($result === Result::OUTCOME_ANNULLO || $result === Result::OUTCOME_ERRORE) {
             $this->logger->notice(sprintf(
                 'Nexi payment status returned for payment with id "%s" from order with id "%s" is cancelled.',
-                $payment->getId(),
-                $payment->getOrder()?->getId()
+                (string) $payment->getId(),
+                (string) $payment->getOrder()?->getId()
             ));
             $this->storeRequestParametersInModel($model, $requestParams);
 
@@ -67,8 +79,8 @@ abstract class AbstractCaptureAction implements ActionInterface, ApiAwareInterfa
         );
         $this->logger->info(sprintf(
             'Nexi payment status returned for payment with id "%s" from order with id "%s" is "%s".',
-            $payment->getId(),
-            $payment->getOrder()?->getId(),
+            (string) $payment->getId(),
+            (string) $payment->getOrder()?->getId(),
             $result,
         ));
         $this->storeRequestParametersInModel($model, $requestParams);
