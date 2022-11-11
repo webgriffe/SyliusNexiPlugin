@@ -38,9 +38,10 @@ final class CaptureAction extends AbstractCaptureAction
     }
 
     /**
-     * This action is invoked by two main entries: the starting payment procedure and the return back to the store after
-     * a completed, cancelled or failed checkout on Nexi. The purpose of this action is also to capture the payment
-     * parameters if the Server2Server POST notify is not yat arrived.
+     * This action is invoked by two main entries: the starting payment procedure and the return back to the store,
+     * of the buyer, after a completed, cancelled or failed checkout on Nexi.
+     * The purpose of this action is also to capture the payment parameters if the Server2Server POST notify
+     * is not yat arrived.
      *
      * @psalm-suppress MoreSpecificImplementedParamType
      * @phpstan-ignore-next-line
