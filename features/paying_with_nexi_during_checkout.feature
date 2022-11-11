@@ -12,27 +12,16 @@ Feature: Paying with nexi during checkout
         And the store ships everywhere for free
         And I am logged in as "john@example.com"
 
-    @ui
-    Scenario: Successfully authorize payment
+    @ui @javascript
+    Scenario: Successful payment
         Given I added product "PHP T-Shirt" to the cart
         And I have proceeded selecting "Nexi" payment method
-        And the payment method "Nexi" requires authorization before capturing
-        When I confirm my order with paypal payment
-        And I sign in to PayPal and authorize successfully
+        When I confirm my order with nexi payment
+        And I sign in to PayPal and pay successfully
         Then I should be notified that my payment has been completed
         And I should see the thank you page
         And the latest order should have a payment with state "completed"
 
-    @ui
-    Scenario: Successful payment
-        Given I added product "PHP T-Shirt" to the cart
-        And I have proceeded selecting "Nexi" payment method
-        When I confirm my order with paypal payment
-        And I sign in to PayPal and pay successfully
-        Then I should be notified that my payment has been completed
-        And I should see the thank you page
-
-    @ui
     Scenario: Cancelling the payment
         Given I added product "PHP T-Shirt" to the cart
         And I have proceeded selecting "Nexi" payment method
@@ -41,7 +30,6 @@ Feature: Paying with nexi during checkout
         Then I should be notified that my payment has been cancelled
         And I should be able to pay again
 
-    @ui
     Scenario: Retrying the payment with success
         Given I added product "PHP T-Shirt" to the cart
         And I have proceeded selecting "Nexi" payment method
@@ -52,7 +40,6 @@ Feature: Paying with nexi during checkout
         Then I should be notified that my payment has been completed
         And I should see the thank you page
 
-    @ui
     Scenario: Retrying the payment and failing
         Given I added product "PHP T-Shirt" to the cart
         And I have proceeded selecting "Nexi" payment method
