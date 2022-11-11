@@ -45,12 +45,30 @@ abstract class AbstractCaptureAction implements ActionInterface, ApiAwareInterfa
     }
 
     /**
+     * If previously the status action is failed then probably the payment outcome parameters
+     * have been stored in the payment details. So check for them, if they exist then we can skip the
+     * capture and procede to the status action.
+     */
+    protected function isPaymentAlreadyCaptured(PaymentInterface $payment): bool
+    {
+        if (array_key_exists(Api::RESULT_FIELD, $payment->getDetails())) {
+            // Already handled this payment
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * This method will capture the payment outcome request parameters and store them in the model.
+     *
      * @param array<string, string> $requestParams
      *
      * @throws InvalidMacException
      */
     protected function capturePaymentDetailsFromRequestParameters(ArrayObject|PaymentInterface $model, PaymentInterface $payment, array $requestParams): void
     {
+        Assert::false($this->isPaymentAlreadyCaptured($payment));
         // Decode non UTF-8 characters
         $requestParams = $this->decoder->decode($requestParams);
         $this->logger->debug('Nexi payment capture parameters', ['parameters' => $requestParams]);
