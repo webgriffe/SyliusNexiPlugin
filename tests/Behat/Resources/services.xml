@@ -3,6 +3,17 @@
 <container xmlns="http://symfony.com/schema/dic/services" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
     <services>
         <defaults public="true" />
-        <!-- Put your Behat services here -->
+
+        <service id="webgriffe_sylius_nexi.behat.context.setup.payment" class="Tests\Webgriffe\SyliusNexiPlugin\Behat\Context\Setup\PaymentContext">
+            <argument type="service" id="sylius.behat.shared_storage" />
+            <argument type="service" id="sylius.repository.payment_method" />
+            <argument type="service" id="sylius.fixture.example_factory.payment_method" />
+            <argument type="service" id="sylius.factory.payment_method_translation" />
+            <argument type="service" id="sylius.manager.payment_method" />
+            <argument type="collection">
+                <argument key="nexi">Nexi Simple Payment Checkout</argument>
+            </argument>
+        </service>
+
     </services>
 </container>
