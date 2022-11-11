@@ -15,7 +15,6 @@ use Webgriffe\LibQuiPago\Signature\Checker;
 use Webgriffe\LibQuiPago\Signature\InvalidMacException;
 use Webgriffe\SyliusNexiPlugin\Decoder\RequestParamsDecoderInterface;
 use Webgriffe\SyliusNexiPlugin\Factory\GetHttpRequestFactoryInterface;
-use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
 use Webmozart\Assert\Assert;
 
 /**
@@ -59,8 +58,7 @@ final class NotifyAction extends AbstractCaptureAction
         /** @var SyliusPaymentInterface|mixed $payment */
         $payment = $request->getFirstModel();
         Assert::isInstanceOf($payment, SyliusPaymentInterface::class);
-        if (array_key_exists(Api::RESULT_FIELD, $payment->getDetails())) {
-            // Already handled this payment
+        if ($this->isPaymentAlreadyCaptured($payment)) {
             return;
         }
 

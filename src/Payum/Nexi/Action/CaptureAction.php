@@ -19,7 +19,6 @@ use Webgriffe\LibQuiPago\Signature\Signer;
 use Webgriffe\SyliusNexiPlugin\Decoder\RequestParamsDecoderInterface;
 use Webgriffe\SyliusNexiPlugin\Factory\GetHttpRequestFactoryInterface;
 use Webgriffe\SyliusNexiPlugin\Factory\RequestFactoryInterface;
-use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
 use Webmozart\Assert\Assert;
 
 /**
@@ -60,8 +59,7 @@ final class CaptureAction extends AbstractCaptureAction
         /** @var SyliusPaymentInterface|mixed $payment */
         $payment = $request->getModel();
         Assert::isInstanceOf($payment, SyliusPaymentInterface::class);
-        if (array_key_exists(Api::RESULT_FIELD, $payment->getDetails())) {
-            // Already captured this payment
+        if ($this->isPaymentAlreadyCaptured($payment)) {
             return;
         }
 
