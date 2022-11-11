@@ -130,7 +130,7 @@ final class CaptureActionSpec extends ObjectBehavior
         $api = new Api(['sandbox' => false, 'alias' => 'ALIAS_WEB_111111', 'mac_key' => '83Y4TDI8W7Y4EWIY48TWT']);
         $this->setApi($api);
 
-        $requestFactory->create($api, $order, $payment, $token)->willReturn($request->getWrappedObject())->shouldNotBeCalled();
+        $requestFactory->create('ALIAS_WEB_111111', $payment, $token)->willReturn($request->getWrappedObject())->shouldNotBeCalled();
 
         $signer->sign($request, '83Y4TDI8W7Y4EWIY48TWT', SignatureMethod::SHA1_METHOD)->shouldNotBeCalled();
         $logger->debug('Nexi payment request prepared for the client browser', ['request' => self::REQUEST_PARAMS])->shouldNotBeCalled();
@@ -153,7 +153,7 @@ final class CaptureActionSpec extends ObjectBehavior
         $api = new Api(['sandbox' => false, 'alias' => 'ALIAS_WEB_111111', 'mac_key' => '83Y4TDI8W7Y4EWIY48TWT']);
         $this->setApi($api);
 
-        $requestFactory->create($api, $order, $payment, $token)->willReturn($request->getWrappedObject())->shouldBeCalledOnce();
+        $requestFactory->create('ALIAS_WEB_111111', $payment, $token)->willReturn($request->getWrappedObject())->shouldBeCalledOnce();
 
         $signer->sign($request, '83Y4TDI8W7Y4EWIY48TWT', SignatureMethod::SHA1_METHOD)->shouldBeCalledOnce();
         $logger->debug('Nexi payment request prepared for the client browser', ['request' => self::REQUEST_PARAMS])->shouldBeCalledOnce();
