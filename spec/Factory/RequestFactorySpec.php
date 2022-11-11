@@ -13,7 +13,6 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Webgriffe\LibQuiPago\PaymentInit\Request;
 use Webgriffe\SyliusNexiPlugin\Factory\RequestFactory;
 use Webgriffe\SyliusNexiPlugin\Factory\RequestFactoryInterface;
-use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
 
 class RequestFactorySpec extends ObjectBehavior
 {
@@ -30,6 +29,7 @@ class RequestFactorySpec extends ObjectBehavior
         $order->getCustomer()->willReturn($customer);
         $order->getNumber()->willReturn('000001');
 
+        $payment->getOrder()->willReturn($order);
         $payment->getId()->willReturn(1);
         $payment->getAmount()->willReturn(1500);
 
@@ -61,8 +61,7 @@ class RequestFactorySpec extends ObjectBehavior
         TokenInterface $token,
     ): void {
         $this->create(
-            new Api(['sandbox' => false, 'alias' => 'ALIAS_WEB_111111', 'mac_key' => '83Y4TDI8W7Y4EWIY48TWT']),
-            $order,
+            'ALIAS_WEB_111111',
             $payment,
             $token
         )->shouldReturnAnInstanceOf(Request::class);

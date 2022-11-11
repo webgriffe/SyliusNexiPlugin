@@ -10,7 +10,6 @@ use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Webgriffe\LibQuiPago\PaymentInit\Request;
-use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
 use Webmozart\Assert\Assert;
 
 final class RequestFactory implements RequestFactoryInterface
@@ -20,8 +19,11 @@ final class RequestFactory implements RequestFactoryInterface
     ) {
     }
 
-    public function create(Api $api, OrderInterface $order, PaymentInterface $payment, TokenInterface $token): Request
+    public function create(string $merchantAlias, PaymentInterface $payment, TokenInterface $token): Request
     {
+        $order = $payment->getOrder();
+        Assert::isInstanceOf($order, OrderInterface::class);
+
         $customer = $order->getCustomer();
         Assert::isInstanceOf($customer, CustomerInterface::class);
 
@@ -31,7 +33,7 @@ final class RequestFactory implements RequestFactoryInterface
         Assert::integer($amount);
 
         return new Request(
-            $api->getMerchantAlias(),
+            $merchantAlias,
             $amount / 100,
             $transactionCode,
             $token->getTargetUrl(),

@@ -79,7 +79,7 @@ final class CaptureAction extends AbstractCaptureAction
         $token = $request->getToken();
         Assert::isInstanceOf($token, TokenInterface::class);
 
-        $nexiRequest = $this->requestFactory->create($this->api, $order, $payment, $token);
+        $nexiRequest = $this->requestFactory->create($this->api->getMerchantAlias(), $payment, $token);
 
         $this->signer->sign($nexiRequest, $this->api->getMacKey(), SignatureMethod::SHA1_METHOD);
         $this->logger->debug('Nexi payment request prepared for the client browser', ['request' => $nexiRequest->getParams()]);
