@@ -14,6 +14,9 @@ use Sylius\Component\Resource\Factory\FactoryInterface;
 
 final class PaymentContext implements Context
 {
+    public const NEXI_ALIAS = 'ALIAS_WEB_111111';
+    public const NEXI_MAC_KEY = '83Y4TDI8W7Y4EWIY48TWT';
+
     public function __construct(
         private SharedStorageInterface $sharedStorage,
         private PaymentMethodRepositoryInterface $paymentMethodRepository,
@@ -34,8 +37,8 @@ final class PaymentContext implements Context
         $paymentMethod = $this->createPaymentMethod($paymentMethodName, $paymentMethodCode, 'Nexi Simple Payment Checkout');
         $paymentMethod->getGatewayConfig()->setConfig([
             'sandbox' => false,
-            'alias' => 'ALIAS_WEB_111111',
-            'mac_key' => '83Y4TDI8W7Y4EWIY48TWT',
+            'alias' => self::NEXI_ALIAS,
+            'mac_key' => self::NEXI_MAC_KEY,
         ]);
 
         $this->paymentMethodManager->flush();
