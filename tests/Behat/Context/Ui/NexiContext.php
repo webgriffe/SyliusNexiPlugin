@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Webgriffe\SyliusNexiPlugin\Behat\Context\Ui;
 
 use Behat\Behat\Context\Context;
+use Behat\Mink\Session;
+use GuzzleHttp\ClientInterface;
 use Sylius\Bundle\PayumBundle\Model\PaymentSecurityTokenInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
 use Sylius\Component\Core\Repository\PaymentRepositoryInterface;
@@ -15,7 +17,9 @@ use Tests\Webgriffe\SyliusNexiPlugin\Behat\Context\Setup\PaymentContext;
 use Tests\Webgriffe\SyliusNexiPlugin\Behat\Page\Shop\Payum\Capture\PayumCaptureDoPageInterface;
 use Webgriffe\LibQuiPago\Lists\Currency;
 use Webgriffe\LibQuiPago\Lists\SignatureMethod;
+use Webgriffe\LibQuiPago\Notification\Result;
 use Webgriffe\LibQuiPago\Signature\DefaultSignatureHashingManager;
+use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
 use Webmozart\Assert\Assert;
 
 final class NexiContext implements Context
@@ -25,7 +29,11 @@ final class NexiContext implements Context
         private RepositoryInterface $paymentTokenRepository,
         private PaymentRepositoryInterface $paymentRepository,
         private UrlGeneratorInterface $urlGenerator,
+        private ClientInterface $client,
+        private Session $session
     ) {
+        // TODO: Why config parameters are not loaded?
+        $this->urlGenerator->setContext(new RequestContext('', 'GET', '127.0.0.1:8080', 'https'));
     }
 
     /**
@@ -33,10 +41,34 @@ final class NexiContext implements Context
      */
     public function iCompleteThePaymentOnNexi(): void
     {
-        $paymentSecurityToken = $this->getCurrentCapturePaymentSecurityToken();
+        $paymentCaptureSecurityToken = $this->getCurrentCapturePaymentSecurityToken();
         $payment = $this->getCurrentPayment();
-        Assert::true($this->payumCaptureDoPage->isOpen(['payum_token' => $paymentSecurityToken->getHash()]), 'The current page is not the capture page.');
-        $this->assertPageHasValidPaymentDetails($payment, $paymentSecurityToken->getHash());
+
+        // Check if all data to send to Nexi are ok
+        Assert::true($this->payumCaptureDoPage->isOpen(['payum_token' => $paymentCaptureSecurityToken->getHash()]), 'The current page is not the capture page.');
+        $this->assertPageHasValidPaymentDetails($payment, $paymentCaptureSecurityToken->getHash());
+        Assert::eq($paymentCaptureSecurityToken->getTargetUrl(), $this->getCaptureUrl($paymentCaptureSecurityToken->getHash()));
+
+        $date = date('Ymd');
+        $time = date('Hmi');
+        $successResponsePayload = [
+            Api::RESULT_FIELD => Result::OUTCOME_OK,
+            'messaggio' => 'Transazione autorizzata.',
+            'alias' => PaymentContext::NEXI_ALIAS,
+            'importo' => $payment->getAmount(),
+            'divisa' => Currency::EURO_CURRENCY_CODE,
+            'codTrans' => $this->getPaymentCode($payment),
+            'mac' => $this->getResponseMac($payment, Result::OUTCOME_OK, $date, $time, 'OKAY'),
+            'data' => $date,
+            'orario' => $time,
+            'codAut' => 'OKAY'
+        ];
+
+        // Simulate S2S payment notify
+        $this->client->request('POST', $this->getNotifyUrl($paymentCaptureSecurityToken->getHash()), ['form_params' => $successResponsePayload]);
+
+        // Simulate coming back from Nexi after completed checkout
+        $this->session->getDriver()->visit($paymentCaptureSecurityToken->getTargetUrl() . '?' . http_build_query($successResponsePayload));
     }
 
     private function getCurrentCapturePaymentSecurityToken(): PaymentSecurityTokenInterface
@@ -68,8 +100,6 @@ final class NexiContext implements Context
 
     public function assertPageHasValidPaymentDetails(PaymentInterface $payment, string $hash): void
     {
-        // TODO: Why config parameters are not loaded?
-        $this->urlGenerator->setContext(new RequestContext('', 'GET', '127.0.0.1:8080', 'https'));
         Assert::eq(
             $this->payumCaptureDoPage->getAlias(),
             PaymentContext::NEXI_ALIAS,
@@ -92,29 +122,17 @@ final class NexiContext implements Context
         );
         Assert::eq(
             $this->payumCaptureDoPage->getSuccessUrl(),
-            $this->urlGenerator->generate(
-                'payum_capture_do',
-                ['payum_token' => $hash],
-                UrlGeneratorInterface::ABSOLUTE_URL
-            ),
+            $this->getCaptureUrl($hash),
             'The data to send to Nexi are not valid! Expected a success url equal to %2$s. Got: %s'
         );
         Assert::eq(
             $this->payumCaptureDoPage->getBackUrl(),
-            $this->urlGenerator->generate(
-                'payum_capture_do',
-                ['payum_token' => $hash],
-                UrlGeneratorInterface::ABSOLUTE_URL
-            ),
+            $this->getCaptureUrl($hash),
             'The data to send to Nexi are not valid! Expected a back url equal to %2$s. Got: %s'
         );
         Assert::eq(
             $this->payumCaptureDoPage->getPostUrl(),
-            $this->urlGenerator->generate(
-                'payum_notify_do_unsafe',
-                ['gateway' => 'nexi', 'notify_token' => $hash],
-                UrlGeneratorInterface::ABSOLUTE_URL
-            ),
+            $this->getNotifyUrl($hash),
             'The data to send to Nexi are not valid! Expected a post url equal to %2$s. Got: %s'
         );
         Assert::eq(
@@ -152,8 +170,43 @@ final class NexiContext implements Context
         return (new DefaultSignatureHashingManager())->hashSignatureString($macString, SignatureMethod::SHA1_METHOD);
     }
 
+    private function getResponseMac(PaymentInterface $payment, string $result, string $date, string $time, string $authCode): string
+    {
+        $macString = sprintf(
+            'codTrans=%sesito=%simporto=%sdivisa=%sdata=%sorario=%scodAut=%s%s',
+            $this->getPaymentCode($payment),
+            $result,
+            $payment->getAmount(),
+            Currency::EURO_CURRENCY_CODE,
+            $date,
+            $time,
+            $authCode,
+            PaymentContext::NEXI_MAC_KEY,
+        );
+
+        return (new DefaultSignatureHashingManager())->hashSignatureString($macString, SignatureMethod::SHA1_METHOD);
+    }
+
     private function getPaymentCode(PaymentInterface $payment): string
     {
         return (string)$payment->getOrder()->getNumber() . '-' . (string)$payment->getId();
+    }
+
+    private function getNotifyUrl(string $hash): string
+    {
+        return $this->urlGenerator->generate(
+            'payum_notify_do_unsafe',
+            ['gateway' => 'nexi', 'notify_token' => $hash],
+            UrlGeneratorInterface::ABSOLUTE_URL
+        );
+    }
+
+    private function getCaptureUrl(string $hash): string
+    {
+        return $this->urlGenerator->generate(
+            'payum_capture_do',
+            ['payum_token' => $hash],
+            UrlGeneratorInterface::ABSOLUTE_URL
+        );
     }
 }

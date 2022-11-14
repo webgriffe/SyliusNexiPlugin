@@ -20,6 +20,8 @@
             <argument type="service" id="sylius.repository.payment_security_token"/>
             <argument type="service" id="sylius.repository.payment"/>
             <argument type="service" id="router"/>
+            <argument type="service" id="sylius.http_client"/>
+            <argument type="service" id="behat.mink.default_session"/>
         </service>
 
         <service id="webgriffe_sylius_nexi.behat.service.mocker.nexi_api" class="Tests\Webgriffe\SyliusNexiPlugin\Behat\Service\Mocker\NexiApiMocker">
