@@ -20,7 +20,8 @@ Feature: Paying with nexi during checkout
         And I complete the payment on Nexi
         Then I should be notified that my payment has been completed
         And I should see the thank you page
-        And the latest order should have a payment with state "completed"
+        When I am viewing the summary of my last order
+        Then I should see its payment status as "Completed"
 
     Scenario: Cancelling the payment
         Given I added product "PHP T-Shirt" to the cart

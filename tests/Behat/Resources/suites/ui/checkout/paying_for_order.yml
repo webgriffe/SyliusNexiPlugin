@@ -34,6 +34,7 @@ default:
                 - webgriffe_sylius_nexi.behat.context.setup.payment
 
                 - sylius.behat.context.ui.paypal
+                - sylius.behat.context.ui.shop.account
                 - sylius.behat.context.ui.shop.cart
                 - sylius.behat.context.ui.shop.checkout
                 - sylius.behat.context.ui.shop.checkout.addressing
