@@ -12,12 +12,12 @@ Feature: Paying with nexi during checkout
         And the store ships everywhere for free
         And I am logged in as "john@example.com"
 
-    @ui @javascript
+    @ui
     Scenario: Successful payment
         Given I added product "PHP T-Shirt" to the cart
         And I have proceeded selecting "Nexi" payment method
-        When I confirm my order with nexi payment
-        And I sign in to PayPal and pay successfully
+        When I confirm my order
+        And I complete the payment on Nexi
         Then I should be notified that my payment has been completed
         And I should see the thank you page
         And the latest order should have a payment with state "completed"
