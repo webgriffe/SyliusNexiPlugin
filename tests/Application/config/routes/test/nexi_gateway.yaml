@@ -1,4 +1,0 @@
-nexi_external_gateway_mock:
-    path: /ecomm/ecomm/DispatcherServlet
-    defaults:
-        _controller: webgriffe_sylius_nexi.controller.nexi_gateway:payAction
