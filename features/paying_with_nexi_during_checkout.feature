@@ -51,3 +51,12 @@ Feature: Paying with nexi during checkout
         When I try to cancel the payment again with Nexi
         Then I should be notified that my payment has been cancelled
         And I should be able to pay again
+
+    @ui
+    Scenario: Successful payment even without returning to the store
+        Given I added product "PHP T-Shirt" to the cart
+        And I have proceeded selecting "Nexi" payment method
+        When I confirm my order
+        And I complete the payment on Nexi without returning to the store
+        When I am viewing the summary of my last order
+        Then I should see its payment status as "Completed"
