@@ -51,27 +51,9 @@ final class NexiContext implements Context
 
         $this->checkIfAllDataToSendToNexiAreOk($paymentCaptureSecurityToken, $payment);
 
-        $date = date('Ymd');
-        $time = date('Hmi');
-        $successResponsePayload = [
-            Api::RESULT_FIELD => Result::OUTCOME_OK,
-            'messaggio' => 'Transazione autorizzata.',
-            'alias' => PaymentContext::NEXI_ALIAS,
-            'importo' => (string) $payment->getAmount(),
-            'divisa' => Currency::EURO_CURRENCY_CODE,
-            'codTrans' => $this->getPaymentCode($payment),
-            'mac' => $this->getResponseMac($payment, Result::OUTCOME_OK, $date, $time, 'OKAY'),
-            'data' => $date,
-            'orario' => $time,
-            'codAut' => 'OKAY'
-        ];
+        $successResponsePayload = $this->getSuccessResponsePayload($payment);
 
-        // Simulate S2S payment notify
-        $this->client->request(
-            'POST',
-            $this->getNotifyUrl($paymentCaptureSecurityToken->getHash()),
-            ['form_params' => $successResponsePayload],
-        );
+        $this->simulateS2SPaymentNotify($paymentCaptureSecurityToken->getHash(), $successResponsePayload);
 
         // Simulate coming back from Nexi after completed checkout
         $this->session->getDriver()->visit($paymentCaptureSecurityToken->getTargetUrl() . '?' . http_build_query($successResponsePayload));
@@ -127,6 +109,21 @@ final class NexiContext implements Context
         $this->iCancelMyNexiPayment();
     }
 
+    /**
+     * @Given /^I complete the payment on Nexi without returning to the store$/
+     */
+    public function iCompleteThePaymentOnNexiWithoutReturningToTheStore(): void
+    {
+        $paymentCaptureSecurityToken = $this->getCurrentCapturePaymentSecurityToken();
+        $payment = $this->getCurrentPayment();
+
+        $this->checkIfAllDataToSendToNexiAreOk($paymentCaptureSecurityToken, $payment);
+
+        $successResponsePayload = $this->getSuccessResponsePayload($payment);
+
+        $this->simulateS2SPaymentNotify($paymentCaptureSecurityToken->getHash(), $successResponsePayload);
+    }
+
     private function getCurrentCapturePaymentSecurityToken(): PaymentSecurityTokenInterface
     {
         /** @var PaymentSecurityTokenInterface[] $paymentSecurityTokens */
@@ -151,7 +148,7 @@ final class NexiContext implements Context
         return $payment;
     }
 
-    public function assertPageHasValidPaymentDetails(PaymentInterface $payment, string $hash): void
+    private function assertPageHasValidPaymentDetails(PaymentInterface $payment, string $hash): void
     {
         Assert::eq(
             $this->payumCaptureDoPage->getAlias(),
@@ -268,5 +265,33 @@ final class NexiContext implements Context
         Assert::true($this->payumCaptureDoPage->isOpen(['payum_token' => $paymentCaptureSecurityToken->getHash()]), 'The current page is not the capture page.');
         $this->assertPageHasValidPaymentDetails($payment, $paymentCaptureSecurityToken->getHash());
         Assert::eq($paymentCaptureSecurityToken->getTargetUrl(), $this->getCaptureUrl($paymentCaptureSecurityToken->getHash()));
+    }
+
+    private function getSuccessResponsePayload(PaymentInterface $payment): array
+    {
+        $date = date('Ymd');
+        $time = date('Hmi');
+
+        return [
+            Api::RESULT_FIELD => Result::OUTCOME_OK,
+            'messaggio' => 'Transazione autorizzata.',
+            'alias' => PaymentContext::NEXI_ALIAS,
+            'importo' => (string)$payment->getAmount(),
+            'divisa' => Currency::EURO_CURRENCY_CODE,
+            'codTrans' => $this->getPaymentCode($payment),
+            'mac' => $this->getResponseMac($payment, Result::OUTCOME_OK, $date, $time, 'OKAY'),
+            'data' => $date,
+            'orario' => $time,
+            'codAut' => 'OKAY'
+        ];
+    }
+
+    private function simulateS2SPaymentNotify(string $hash, array $successResponsePayload): void
+    {
+        $this->client->request(
+            'POST',
+            $this->getNotifyUrl($hash),
+            ['form_params' => $successResponsePayload],
+        );
     }
 }
