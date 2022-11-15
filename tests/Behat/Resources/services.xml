@@ -22,11 +22,7 @@
             <argument type="service" id="router"/>
             <argument type="service" id="sylius.http_client"/>
             <argument type="service" id="behat.mink.default_session"/>
-        </service>
-
-        <service id="webgriffe_sylius_nexi.behat.service.mocker.nexi_api" class="Tests\Webgriffe\SyliusNexiPlugin\Behat\Service\Mocker\NexiApiMocker">
-            <argument type="service" id="sylius.behat.mocker"/>
-            <argument type="service" id="sylius.behat.response_loader"/>
+            <argument type="service" id="sylius.behat.page.shop.order.show"/>
         </service>
 
         <service id="webgriffe_sylius_nexi.behat.page.shop.payum.capture.do" class="Tests\Webgriffe\SyliusNexiPlugin\Behat\Page\Shop\Payum\Capture\PayumCaptureDoPage" parent="sylius.behat.symfony_page" public="false"/>
