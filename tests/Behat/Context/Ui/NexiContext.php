@@ -7,6 +7,8 @@ namespace Tests\Webgriffe\SyliusNexiPlugin\Behat\Context\Ui;
 use Behat\Behat\Context\Context;
 use Behat\Mink\Session;
 use GuzzleHttp\ClientInterface;
+use JsonException;
+use Sylius\Behat\Page\Shop\Order\ShowPageInterface;
 use Sylius\Bundle\PayumBundle\Model\PaymentSecurityTokenInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
 use Sylius\Component\Core\Repository\PaymentRepositoryInterface;
@@ -30,24 +32,24 @@ final class NexiContext implements Context
         private PaymentRepositoryInterface $paymentRepository,
         private UrlGeneratorInterface $urlGenerator,
         private ClientInterface $client,
-        private Session $session
+        private Session $session,
+        private ShowPageInterface $orderDetails,
     ) {
         // TODO: Why config parameters are not loaded?
         $this->urlGenerator->setContext(new RequestContext('', 'GET', '127.0.0.1:8080', 'https'));
     }
 
     /**
-     * @When I complete the payment on Nexi
+     * @When /^I complete the payment on Nexi$/
+     *
+     * @throws JsonException
      */
     public function iCompleteThePaymentOnNexi(): void
     {
         $paymentCaptureSecurityToken = $this->getCurrentCapturePaymentSecurityToken();
         $payment = $this->getCurrentPayment();
 
-        // Check if all data to send to Nexi are ok
-        Assert::true($this->payumCaptureDoPage->isOpen(['payum_token' => $paymentCaptureSecurityToken->getHash()]), 'The current page is not the capture page.');
-        $this->assertPageHasValidPaymentDetails($payment, $paymentCaptureSecurityToken->getHash());
-        Assert::eq($paymentCaptureSecurityToken->getTargetUrl(), $this->getCaptureUrl($paymentCaptureSecurityToken->getHash()));
+        $this->checkIfAllDataToSendToNexiAreOk($paymentCaptureSecurityToken, $payment);
 
         $date = date('Ymd');
         $time = date('Hmi');
@@ -55,7 +57,7 @@ final class NexiContext implements Context
             Api::RESULT_FIELD => Result::OUTCOME_OK,
             'messaggio' => 'Transazione autorizzata.',
             'alias' => PaymentContext::NEXI_ALIAS,
-            'importo' => $payment->getAmount(),
+            'importo' => (string) $payment->getAmount(),
             'divisa' => Currency::EURO_CURRENCY_CODE,
             'codTrans' => $this->getPaymentCode($payment),
             'mac' => $this->getResponseMac($payment, Result::OUTCOME_OK, $date, $time, 'OKAY'),
@@ -65,23 +67,75 @@ final class NexiContext implements Context
         ];
 
         // Simulate S2S payment notify
-        $this->client->request('POST', $this->getNotifyUrl($paymentCaptureSecurityToken->getHash()), ['form_params' => $successResponsePayload]);
+        $this->client->request(
+            'POST',
+            $this->getNotifyUrl($paymentCaptureSecurityToken->getHash()),
+            ['form_params' => $successResponsePayload],
+        );
 
         // Simulate coming back from Nexi after completed checkout
         $this->session->getDriver()->visit($paymentCaptureSecurityToken->getTargetUrl() . '?' . http_build_query($successResponsePayload));
+    }
+
+    /**
+     * @Given /^I have cancelled (?:|my )Nexi payment$/
+     * @When /^I cancel (?:|my )Nexi payment$/
+     *
+     * @throws JsonException
+     */
+    public function iCancelMyNexiPayment(): void
+    {
+        $paymentCaptureSecurityToken = $this->getCurrentCapturePaymentSecurityToken();
+        $payment = $this->getCurrentPayment();
+
+        $this->checkIfAllDataToSendToNexiAreOk($paymentCaptureSecurityToken, $payment);
+
+        $cancelResponsePayload = [
+            Api::RESULT_FIELD => Result::OUTCOME_ANNULLO,
+            'alias' => PaymentContext::NEXI_ALIAS,
+            'importo' => (string) $payment->getAmount(),
+            'divisa' => Currency::EURO_CURRENCY_CODE,
+            'codTrans' => $this->getPaymentCode($payment),
+        ];
+
+        // Simulate S2S payment notify
+        $this->client->request(
+            'POST',
+            $this->getNotifyUrl($paymentCaptureSecurityToken->getHash()),
+            ['form_params' => $cancelResponsePayload],
+        );
+
+        // Simulate coming back from Nexi after completed checkout
+        $this->session->getDriver()->visit($paymentCaptureSecurityToken->getTargetUrl() . '?' . http_build_query($cancelResponsePayload));
+    }
+
+    /**
+     * @When /^I try to complete pay again with Nexi$/
+     */
+    public function iTryToCompletePayAgainWithNexi(): void
+    {
+        $this->orderDetails->pay();
+        $this->iCompleteThePaymentOnNexi();
+    }
+
+    /**
+     * @When /^I try to cancel the payment again with Nexi$/
+     */
+    public function iTryToCancelThePaymentAgainWithNexi(): void
+    {
+        $this->orderDetails->pay();
+        $this->iCancelMyNexiPayment();
     }
 
     private function getCurrentCapturePaymentSecurityToken(): PaymentSecurityTokenInterface
     {
         /** @var PaymentSecurityTokenInterface[] $paymentSecurityTokens */
         $paymentSecurityTokens = $this->paymentTokenRepository->findAll();
-        Assert::count($paymentSecurityTokens, 2);
         /** @var PaymentSecurityTokenInterface $paymentSecurityToken */
         $paymentSecurityTokens = array_filter($paymentSecurityTokens, static function (PaymentSecurityTokenInterface $token): bool {
             return $token->getAfterUrl() !== null;
         });
-        Assert::count($paymentSecurityTokens, 1);
-        $paymentSecurityToken = reset($paymentSecurityTokens);
+        $paymentSecurityToken = array_pop($paymentSecurityTokens);
         Assert::isInstanceOf($paymentSecurityToken, PaymentSecurityTokenInterface::class);
 
         return $paymentSecurityToken;
@@ -90,8 +144,7 @@ final class NexiContext implements Context
     private function getCurrentPayment(): PaymentInterface
     {
         /** @var PaymentInterface[] $payments */
-        $payments = $this->paymentRepository->findAll();
-        Assert::count($payments, 1);
+        $payments = $this->paymentRepository->findBy(['state' => PaymentInterface::STATE_NEW]);
         $payment = reset($payments);
         Assert::isInstanceOf($payment, PaymentInterface::class);
 
@@ -208,5 +261,12 @@ final class NexiContext implements Context
             ['payum_token' => $hash],
             UrlGeneratorInterface::ABSOLUTE_URL
         );
+    }
+
+    private function checkIfAllDataToSendToNexiAreOk(PaymentSecurityTokenInterface $paymentCaptureSecurityToken, PaymentInterface $payment): void
+    {
+        Assert::true($this->payumCaptureDoPage->isOpen(['payum_token' => $paymentCaptureSecurityToken->getHash()]), 'The current page is not the capture page.');
+        $this->assertPageHasValidPaymentDetails($payment, $paymentCaptureSecurityToken->getHash());
+        Assert::eq($paymentCaptureSecurityToken->getTargetUrl(), $this->getCaptureUrl($paymentCaptureSecurityToken->getHash()));
     }
 }

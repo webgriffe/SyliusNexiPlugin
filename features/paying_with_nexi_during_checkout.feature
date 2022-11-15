@@ -23,30 +23,31 @@ Feature: Paying with nexi during checkout
         When I am viewing the summary of my last order
         Then I should see its payment status as "Completed"
 
+    @ui
     Scenario: Cancelling the payment
         Given I added product "PHP T-Shirt" to the cart
         And I have proceeded selecting "Nexi" payment method
-        When I confirm my order with paypal payment
-        And I cancel my PayPal payment
+        When I confirm my order
+        And I cancel my Nexi payment
         Then I should be notified that my payment has been cancelled
         And I should be able to pay again
 
+    @ui
     Scenario: Retrying the payment with success
         Given I added product "PHP T-Shirt" to the cart
         And I have proceeded selecting "Nexi" payment method
-        And I have confirmed my order with paypal payment
-        But I have cancelled PayPal payment
-        When I try to pay again
-        And I sign in to PayPal and pay successfully
+        And I have confirmed order
+        But I have cancelled Nexi payment
+        When I try to complete pay again with Nexi
         Then I should be notified that my payment has been completed
         And I should see the thank you page
 
+    @ui
     Scenario: Retrying the payment and failing
         Given I added product "PHP T-Shirt" to the cart
         And I have proceeded selecting "Nexi" payment method
         And I have confirmed my order with paypal payment
-        But I have cancelled PayPal payment
-        When I try to pay again
-        And I cancel my PayPal payment
+        But I have cancelled Nexi payment
+        When I try to cancel the payment again with Nexi
         Then I should be notified that my payment has been cancelled
         And I should be able to pay again
