@@ -44,7 +44,7 @@
         "symfony/dotenv": "^5.4",
         "symfony/intl": "^5.4",
         "symfony/web-profiler-bundle": "^5.4",
-        "vimeo/psalm": "4.7.1",
+        "vimeo/psalm": "4.23.0",
         "polishsymfonycommunity/symfony-mocker-container": "^1.0"
     },
     "config": {
@@ -80,6 +80,11 @@
         ],
         "post-create-project-cmd": [
             "php bin/create_node_symlink.php"
-        ]
+        ],
+        "auto-scripts": {
+            "cache:clear": "symfony-cmd",
+            "assets:install %PUBLIC_DIR%": "symfony-cmd",
+            "security-checker security:check": "script"
+        }
     }
 }
