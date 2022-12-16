@@ -4,9 +4,10 @@
     </a>
 </p>
 
-<h1 align="center">Plugin Skeleton</h1>
+<h1 align="center">Sylius Nexi Plugin</h1>
 
-<p align="center">Skeleton for starting Sylius plugins.</p>
+> Note! This plugin is only compatible with the Nexi configuration which allows only one payment per request. It is
+> therefore not possible to retry the payment several times on the Nexi checkout!
 
 ## Documentation
 
