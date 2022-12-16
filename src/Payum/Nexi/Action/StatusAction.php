@@ -35,7 +35,6 @@ final class StatusAction implements ActionInterface
     public function execute($request): void
     {
         RequestNotSupportedException::assertSupports($this, $request);
-        Assert::methodExists($request, 'getFirstModel');
 
         /** @var SyliusPaymentInterface $payment */
         $payment = $request->getFirstModel();

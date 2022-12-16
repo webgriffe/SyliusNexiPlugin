@@ -20,8 +20,9 @@ final class NexiGatewayFactory extends GatewayFactory
         );
 
         if (false === (bool) $config['payum.api']) {
-            $config['payum.default_options'] = ['sandbox' => true];
-            $config->defaults($config['payum.default_options']);
+            $defaultOptions = ['sandbox' => true];
+            $config->defaults($defaultOptions);
+            $config['payum.default_options'] = $defaultOptions;
             $config['payum.required_options'] = ['alias', 'mac_key', 'sandbox'];
 
             $config['payum.api'] = static fn (\ArrayObject $config): Api => new Api((array) $config);
