@@ -43,7 +43,7 @@ final class RequestFactory implements RequestFactoryInterface
             $this->mapLocaleCodeToNexiLocaleCode($order->getLocaleCode()),
             $this->urlGenerator->generate(
                 'payum_notify_do_unsafe',
-                ['gateway' => 'nexi', 'notify_token' => $token->getHash()],
+                ['gateway' => $token->getGatewayName(), 'notify_token' => $token->getHash()],
                 UrlGeneratorInterface::ABSOLUTE_URL
             ),
             null,

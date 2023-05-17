@@ -35,12 +35,13 @@ class RequestFactorySpec extends ObjectBehavior
 
         $token->getTargetUrl()->willReturn('https://target.url/');
         $token->getHash()->willReturn('HASH_TOKEN');
+        $token->getGatewayName()->willReturn('nexi_payment_method');
 
         $urlGenerator->generate(
             'payum_notify_do_unsafe',
-            ['gateway' => 'nexi', 'notify_token' => 'HASH_TOKEN'],
+            ['gateway' => 'nexi_payment_method', 'notify_token' => 'HASH_TOKEN'],
             UrlGeneratorInterface::ABSOLUTE_URL
-        )->willReturn('https://notify.url/unsafe');
+        )->willReturn('https://notify.url/unsafe/nexi_payment_method?notify_token=HASH_TOKEN');
 
         $this->beConstructedWith($urlGenerator);
     }
