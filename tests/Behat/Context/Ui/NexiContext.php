@@ -53,7 +53,7 @@ final class NexiContext implements Context
 
         $successResponsePayload = $this->getSuccessResponsePayload($payment);
 
-        $this->simulateS2SPaymentNotify($paymentCaptureSecurityToken->getHash(), $successResponsePayload);
+        $this->simulateS2SPaymentNotify($paymentCaptureSecurityToken, $successResponsePayload);
 
         // Simulate coming back from Nexi after completed checkout
         $this->session->getDriver()->visit($paymentCaptureSecurityToken->getTargetUrl() . '?' . http_build_query($successResponsePayload));
@@ -83,7 +83,7 @@ final class NexiContext implements Context
         // Simulate S2S payment notify
         $this->client->request(
             'POST',
-            $this->getNotifyUrl($paymentCaptureSecurityToken->getHash()),
+            $this->getNotifyUrl($paymentCaptureSecurityToken),
             ['form_params' => $cancelResponsePayload],
         );
 
@@ -121,7 +121,7 @@ final class NexiContext implements Context
 
         $successResponsePayload = $this->getSuccessResponsePayload($payment);
 
-        $this->simulateS2SPaymentNotify($paymentCaptureSecurityToken->getHash(), $successResponsePayload);
+        $this->simulateS2SPaymentNotify($paymentCaptureSecurityToken, $successResponsePayload);
     }
 
     private function getCurrentCapturePaymentSecurityToken(): PaymentSecurityTokenInterface
@@ -148,7 +148,7 @@ final class NexiContext implements Context
         return $payment;
     }
 
-    private function assertPageHasValidPaymentDetails(PaymentInterface $payment, string $hash): void
+    private function assertPageHasValidPaymentDetails(PaymentInterface $payment, PaymentSecurityTokenInterface $token): void
     {
         Assert::eq(
             $this->payumCaptureDoPage->getAlias(),
@@ -172,17 +172,17 @@ final class NexiContext implements Context
         );
         Assert::eq(
             $this->payumCaptureDoPage->getSuccessUrl(),
-            $this->getCaptureUrl($hash),
+            $this->getCaptureUrl($token),
             'The data to send to Nexi are not valid! Expected a success url equal to %2$s. Got: %s'
         );
         Assert::eq(
             $this->payumCaptureDoPage->getBackUrl(),
-            $this->getCaptureUrl($hash),
+            $this->getCaptureUrl($token),
             'The data to send to Nexi are not valid! Expected a back url equal to %2$s. Got: %s'
         );
         Assert::eq(
             $this->payumCaptureDoPage->getPostUrl(),
-            $this->getNotifyUrl($hash),
+            $this->getNotifyUrl($token),
             'The data to send to Nexi are not valid! Expected a post url equal to %2$s. Got: %s'
         );
         Assert::eq(
@@ -242,20 +242,20 @@ final class NexiContext implements Context
         return (string)$payment->getOrder()->getNumber() . '-' . (string)$payment->getId();
     }
 
-    private function getNotifyUrl(string $hash): string
+    private function getNotifyUrl(PaymentSecurityTokenInterface $token): string
     {
         return $this->urlGenerator->generate(
             'payum_notify_do_unsafe',
-            ['gateway' => 'nexi', 'notify_token' => $hash],
+            ['gateway' => $token->getGatewayName(), 'notify_token' => $token->getHash()],
             UrlGeneratorInterface::ABSOLUTE_URL
         );
     }
 
-    private function getCaptureUrl(string $hash): string
+    private function getCaptureUrl(PaymentSecurityTokenInterface $token): string
     {
         return $this->urlGenerator->generate(
             'payum_capture_do',
-            ['payum_token' => $hash],
+            ['payum_token' => $token->getHash()],
             UrlGeneratorInterface::ABSOLUTE_URL
         );
     }
@@ -263,8 +263,8 @@ final class NexiContext implements Context
     private function checkIfAllDataToSendToNexiAreOk(PaymentSecurityTokenInterface $paymentCaptureSecurityToken, PaymentInterface $payment): void
     {
         Assert::true($this->payumCaptureDoPage->isOpen(['payum_token' => $paymentCaptureSecurityToken->getHash()]), 'The current page is not the capture page.');
-        $this->assertPageHasValidPaymentDetails($payment, $paymentCaptureSecurityToken->getHash());
-        Assert::eq($paymentCaptureSecurityToken->getTargetUrl(), $this->getCaptureUrl($paymentCaptureSecurityToken->getHash()));
+        $this->assertPageHasValidPaymentDetails($payment, $paymentCaptureSecurityToken);
+        Assert::eq($paymentCaptureSecurityToken->getTargetUrl(), $this->getCaptureUrl($paymentCaptureSecurityToken));
     }
 
     private function getSuccessResponsePayload(PaymentInterface $payment): array
@@ -286,11 +286,11 @@ final class NexiContext implements Context
         ];
     }
 
-    private function simulateS2SPaymentNotify(string $hash, array $successResponsePayload): void
+    private function simulateS2SPaymentNotify(PaymentSecurityTokenInterface $token, array $successResponsePayload): void
     {
         $this->client->request(
             'POST',
-            $this->getNotifyUrl($hash),
+            $this->getNotifyUrl($token),
             ['form_params' => $successResponsePayload],
         );
     }

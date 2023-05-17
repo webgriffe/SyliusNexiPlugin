@@ -10,7 +10,6 @@ use Sylius\Behat\Service\SharedStorageInterface;
 use Sylius\Bundle\CoreBundle\Fixture\Factory\ExampleFactoryInterface;
 use Sylius\Component\Core\Model\PaymentMethodInterface;
 use Sylius\Component\Payment\Repository\PaymentMethodRepositoryInterface;
-use Sylius\Component\Resource\Factory\FactoryInterface;
 
 final class PaymentContext implements Context
 {
@@ -21,7 +20,6 @@ final class PaymentContext implements Context
         private SharedStorageInterface $sharedStorage,
         private PaymentMethodRepositoryInterface $paymentMethodRepository,
         private ExampleFactoryInterface $paymentMethodExampleFactory,
-        private FactoryInterface $paymentMethodTranslationFactory,
         private ObjectManager $paymentMethodManager,
         private array $gatewayFactories,
     ) {
