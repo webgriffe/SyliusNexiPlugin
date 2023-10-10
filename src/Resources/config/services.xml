@@ -56,9 +56,7 @@
 
         <service id="webgriffe_sylius_nexi.decoder.request_params" class="Webgriffe\SyliusNexiPlugin\Decoder\RequestParamsDecoder"/>
 
-        <service id="webgriffe_sylius_nexi.factory.request" class="Webgriffe\SyliusNexiPlugin\Factory\RequestFactory">
-            <argument type="service" id="router" />
-        </service>
+        <service id="webgriffe_sylius_nexi.factory.request" class="Webgriffe\SyliusNexiPlugin\Factory\RequestFactory" />
 
         <service id="webgriffe_sylius_nexi.factory.get_http_request" class="Webgriffe\SyliusNexiPlugin\Factory\GetHttpRequestFactory"/>
     </services>
