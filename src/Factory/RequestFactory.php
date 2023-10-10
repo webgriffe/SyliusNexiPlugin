@@ -8,19 +8,17 @@ use Payum\Core\Security\TokenInterface;
 use Sylius\Component\Core\Model\CustomerInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Webgriffe\LibQuiPago\PaymentInit\Request;
 use Webmozart\Assert\Assert;
 
 final class RequestFactory implements RequestFactoryInterface
 {
-    public function __construct(
-        private UrlGeneratorInterface $urlGenerator,
-    ) {
-    }
-
-    public function create(string $merchantAlias, PaymentInterface $payment, TokenInterface $token): Request
-    {
+    public function create(
+        string $merchantAlias,
+        PaymentInterface $payment,
+        TokenInterface $token,
+        TokenInterface $notifyToken
+    ): Request {
         $order = $payment->getOrder();
         Assert::isInstanceOf($order, OrderInterface::class);
 
@@ -41,11 +39,7 @@ final class RequestFactory implements RequestFactoryInterface
             $token->getTargetUrl(),
             null,
             $this->mapLocaleCodeToNexiLocaleCode($order->getLocaleCode()),
-            $this->urlGenerator->generate(
-                'payum_notify_do_unsafe',
-                ['gateway' => $token->getGatewayName(), 'notify_token' => $token->getHash()],
-                UrlGeneratorInterface::ABSOLUTE_URL
-            ),
+            $notifyToken->getTargetUrl(),
             null,
             null,
             '#' . (string) $order->getNumber()

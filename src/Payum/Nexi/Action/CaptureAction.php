@@ -8,6 +8,9 @@ use Payum\Core\Exception\RequestNotSupportedException;
 use Payum\Core\Reply\HttpPostRedirect;
 use Payum\Core\Request\Capture;
 use Payum\Core\Request\Generic;
+use Payum\Core\Security\GenericTokenFactoryAwareInterface;
+use Payum\Core\Security\GenericTokenFactoryAwareTrait;
+use Payum\Core\Security\TokenFactoryInterface;
 use Payum\Core\Security\TokenInterface;
 use Psr\Log\LoggerInterface;
 use Sylius\Component\Core\Model\OrderInterface;
@@ -24,8 +27,10 @@ use Webmozart\Assert\Assert;
 /**
  * @psalm-suppress PropertyNotSetInConstructor
  */
-final class CaptureAction extends AbstractCaptureAction
+final class CaptureAction extends AbstractCaptureAction implements GenericTokenFactoryAwareInterface
 {
+    use GenericTokenFactoryAwareTrait;
+
     public function __construct(
         private Signer $signer,
         Checker $checker,
@@ -78,7 +83,8 @@ final class CaptureAction extends AbstractCaptureAction
         $token = $request->getToken();
         Assert::isInstanceOf($token, TokenInterface::class);
 
-        $nexiRequest = $this->requestFactory->create($this->api->getMerchantAlias(), $payment, $token);
+        $notifyToken = $this->tokenFactory->createNotifyToken($token->getGatewayName(), $token->getDetails());
+        $nexiRequest = $this->requestFactory->create($this->api->getMerchantAlias(), $payment, $token, $notifyToken);
 
         $this->signer->sign($nexiRequest, $this->api->getMacKey(), SignatureMethod::SHA1_METHOD);
         $this->logger->debug('Nexi payment request prepared for the client browser', ['request' => $nexiRequest->getParams()]);
