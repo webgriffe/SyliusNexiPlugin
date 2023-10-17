@@ -9,7 +9,6 @@ use PhpSpec\ObjectBehavior;
 use Sylius\Component\Core\Model\CustomerInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Webgriffe\LibQuiPago\PaymentInit\Request;
 use Webgriffe\SyliusNexiPlugin\Factory\RequestFactory;
 use Webgriffe\SyliusNexiPlugin\Factory\RequestFactoryInterface;
@@ -17,10 +16,10 @@ use Webgriffe\SyliusNexiPlugin\Factory\RequestFactoryInterface;
 class RequestFactorySpec extends ObjectBehavior
 {
     public function let(
-        UrlGeneratorInterface $urlGenerator,
         OrderInterface $order,
         PaymentInterface $payment,
         TokenInterface $token,
+        TokenInterface $notifyToken,
         CustomerInterface $customer,
     ): void {
         $customer->getEmail()->willReturn('customer@email.com');
@@ -37,13 +36,9 @@ class RequestFactorySpec extends ObjectBehavior
         $token->getHash()->willReturn('HASH_TOKEN');
         $token->getGatewayName()->willReturn('nexi_payment_method');
 
-        $urlGenerator->generate(
-            'payum_notify_do_unsafe',
-            ['gateway' => 'nexi_payment_method', 'notify_token' => 'HASH_TOKEN'],
-            UrlGeneratorInterface::ABSOLUTE_URL
-        )->willReturn('https://notify.url/unsafe/nexi_payment_method?notify_token=HASH_TOKEN');
+        $notifyToken->getTargetUrl()->willReturn('https://notify.url?notify_token=HASH_TOKEN');
 
-        $this->beConstructedWith($urlGenerator);
+        $this->beConstructedWith();
     }
 
     public function it_is_initializable(): void
@@ -57,14 +52,15 @@ class RequestFactorySpec extends ObjectBehavior
     }
 
     public function it_creates_request(
-        OrderInterface $order,
         PaymentInterface $payment,
         TokenInterface $token,
+        TokenInterface $notifyToken,
     ): void {
         $this->create(
             'ALIAS_WEB_111111',
             $payment,
-            $token
+            $token,
+            $notifyToken,
         )->shouldReturnAnInstanceOf(Request::class);
     }
 }

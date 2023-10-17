@@ -12,6 +12,9 @@ use Payum\Core\GatewayInterface;
 use Payum\Core\Reply\HttpPostRedirect;
 use Payum\Core\Request\Capture;
 use Payum\Core\Request\GetHttpRequest;
+use Payum\Core\Security\GenericTokenFactoryInterface;
+use Payum\Core\Security\TokenInterface;
+use Payum\Core\Storage\IdentityInterface;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 use Psr\Log\LoggerInterface;
@@ -47,6 +50,9 @@ final class CaptureActionSpec extends ObjectBehavior
         Request $request,
         GetHttpRequestFactoryInterface $getHttpRequestFactory,
         GetHttpRequest $getHttpRequest,
+        GenericTokenFactoryInterface $tokenFactory,
+        TokenInterface $notifyToken,
+        IdentityInterface $tokenIdentity,
     ): void {
         $order->getId()->willReturn(1);
 
@@ -60,6 +66,8 @@ final class CaptureActionSpec extends ObjectBehavior
 
         $getHttpRequestFactory->create()->willReturn($getHttpRequest);
 
+        $tokenFactory->createNotifyToken('nexi', $tokenIdentity)->willReturn($notifyToken);
+
         $this->beConstructedWith(
             $signer,
             $checker,
@@ -68,6 +76,7 @@ final class CaptureActionSpec extends ObjectBehavior
             $requestFactory,
             $getHttpRequestFactory,
         );
+        $this->setGenericTokenFactory($tokenFactory);
         $this->setGateway($gateway);
     }
 
@@ -100,7 +109,7 @@ final class CaptureActionSpec extends ObjectBehavior
     {
         $this->shouldThrow(UnsupportedApiException::class)->during(
             'setApi',
-            [new stdClass()]
+            [new stdClass()],
         );
     }
 
@@ -121,7 +130,7 @@ final class CaptureActionSpec extends ObjectBehavior
         Request $request,
         LoggerInterface $logger,
         RequestFactoryInterface $requestFactory,
-        OrderInterface $order,
+        TokenInterface $notifyToken,
     ): void {
         $payment->getDetails()->willReturn(['esito' => 'KO']);
         $capture = new Capture($token->getWrappedObject());
@@ -130,7 +139,7 @@ final class CaptureActionSpec extends ObjectBehavior
         $api = new Api(['sandbox' => false, 'alias' => 'ALIAS_WEB_111111', 'mac_key' => '83Y4TDI8W7Y4EWIY48TWT']);
         $this->setApi($api);
 
-        $requestFactory->create('ALIAS_WEB_111111', $payment, $token)->willReturn($request->getWrappedObject())->shouldNotBeCalled();
+        $requestFactory->create('ALIAS_WEB_111111', $payment, $token, $notifyToken)->willReturn($request->getWrappedObject())->shouldNotBeCalled();
 
         $signer->sign($request, '83Y4TDI8W7Y4EWIY48TWT', SignatureMethod::SHA1_METHOD)->shouldNotBeCalled();
         $logger->debug('Nexi payment request prepared for the client browser', ['request' => self::REQUEST_PARAMS])->shouldNotBeCalled();
@@ -145,15 +154,18 @@ final class CaptureActionSpec extends ObjectBehavior
         Request $request,
         LoggerInterface $logger,
         RequestFactoryInterface $requestFactory,
-        OrderInterface $order,
+        TokenInterface $notifyToken,
+        IdentityInterface $tokenIdentity,
     ): void {
+        $token->getDetails()->willReturn($tokenIdentity);
+        $token->getGatewayName()->willReturn('nexi');
         $capture = new Capture($token->getWrappedObject());
         $capture->setModel($payment->getWrappedObject());
 
         $api = new Api(['sandbox' => false, 'alias' => 'ALIAS_WEB_111111', 'mac_key' => '83Y4TDI8W7Y4EWIY48TWT']);
         $this->setApi($api);
 
-        $requestFactory->create('ALIAS_WEB_111111', $payment, $token)->willReturn($request->getWrappedObject())->shouldBeCalledOnce();
+        $requestFactory->create('ALIAS_WEB_111111', $payment, $token, $notifyToken)->willReturn($request->getWrappedObject())->shouldBeCalledOnce();
 
         $signer->sign($request, '83Y4TDI8W7Y4EWIY48TWT', SignatureMethod::SHA1_METHOD)->shouldBeCalledOnce();
         $logger->debug('Nexi payment request prepared for the client browser', ['request' => self::REQUEST_PARAMS])->shouldBeCalledOnce();
