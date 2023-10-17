@@ -46,14 +46,14 @@ final class NexiContext implements Context
      */
     public function iCompleteThePaymentOnNexi(): void
     {
-        $paymentCaptureSecurityToken = $this->getCurrentCapturePaymentSecurityToken();
         $payment = $this->getCurrentPayment();
+        [$paymentCaptureSecurityToken, $paymentNotifySecurityToken] = $this->getCurrentCaptureAndNotifyPaymentSecurityTokens($payment);
 
-        $this->checkIfAllDataToSendToNexiAreOk($paymentCaptureSecurityToken, $payment);
+        $this->checkIfAllDataToSendToNexiAreOk($paymentCaptureSecurityToken, $paymentNotifySecurityToken, $payment);
 
         $successResponsePayload = $this->getSuccessResponsePayload($payment);
 
-        $this->simulateS2SPaymentNotify($paymentCaptureSecurityToken, $successResponsePayload);
+        $this->simulateS2SPaymentNotify($paymentNotifySecurityToken, $successResponsePayload);
 
         // Simulate coming back from Nexi after completed checkout
         $this->session->getDriver()->visit($paymentCaptureSecurityToken->getTargetUrl() . '?' . http_build_query($successResponsePayload));
@@ -67,10 +67,10 @@ final class NexiContext implements Context
      */
     public function iCancelMyNexiPayment(): void
     {
-        $paymentCaptureSecurityToken = $this->getCurrentCapturePaymentSecurityToken();
         $payment = $this->getCurrentPayment();
+        [$paymentCaptureSecurityToken, $paymentNotifySecurityToken] = $this->getCurrentCaptureAndNotifyPaymentSecurityTokens($payment);
 
-        $this->checkIfAllDataToSendToNexiAreOk($paymentCaptureSecurityToken, $payment);
+        $this->checkIfAllDataToSendToNexiAreOk($paymentCaptureSecurityToken, $paymentNotifySecurityToken, $payment);
 
         $cancelResponsePayload = [
             Api::RESULT_FIELD => Result::OUTCOME_ANNULLO,
@@ -81,11 +81,7 @@ final class NexiContext implements Context
         ];
 
         // Simulate S2S payment notify
-        $this->client->request(
-            'POST',
-            $this->getNotifyUrl($paymentCaptureSecurityToken),
-            ['form_params' => $cancelResponsePayload],
-        );
+        $this->simulateS2SPaymentNotify($paymentNotifySecurityToken, $cancelResponsePayload);
 
         // Simulate coming back from Nexi after completed checkout
         $this->session->getDriver()->visit($paymentCaptureSecurityToken->getTargetUrl() . '?' . http_build_query($cancelResponsePayload));
@@ -114,28 +110,31 @@ final class NexiContext implements Context
      */
     public function iCompleteThePaymentOnNexiWithoutReturningToTheStore(): void
     {
-        $paymentCaptureSecurityToken = $this->getCurrentCapturePaymentSecurityToken();
         $payment = $this->getCurrentPayment();
+        [$paymentCaptureSecurityToken, $paymentNotifySecurityToken] = $this->getCurrentCaptureAndNotifyPaymentSecurityTokens($payment);
 
-        $this->checkIfAllDataToSendToNexiAreOk($paymentCaptureSecurityToken, $payment);
+        $this->checkIfAllDataToSendToNexiAreOk($paymentCaptureSecurityToken, $paymentNotifySecurityToken, $payment);
 
         $successResponsePayload = $this->getSuccessResponsePayload($payment);
 
-        $this->simulateS2SPaymentNotify($paymentCaptureSecurityToken, $successResponsePayload);
+        $this->simulateS2SPaymentNotify($paymentNotifySecurityToken, $successResponsePayload);
     }
 
-    private function getCurrentCapturePaymentSecurityToken(): PaymentSecurityTokenInterface
+    /**
+     * @return array{PaymentSecurityTokenInterface, PaymentSecurityTokenInterface}
+     */
+    private function getCurrentCaptureAndNotifyPaymentSecurityTokens(PaymentInterface $payment): array
     {
         /** @var PaymentSecurityTokenInterface[] $paymentSecurityTokens */
-        $paymentSecurityTokens = $this->paymentTokenRepository->findAll();
-        /** @var PaymentSecurityTokenInterface $paymentSecurityToken */
-        $paymentSecurityTokens = array_filter($paymentSecurityTokens, static function (PaymentSecurityTokenInterface $token): bool {
-            return $token->getAfterUrl() !== null;
+        $paymentSecurityTokens = array_filter($this->paymentTokenRepository->findAll(), static function (PaymentSecurityTokenInterface $token) use ($payment): bool {
+            return $token->getDetails()->getId() === $payment->getId() && $token->getDetails()->getClass() === get_class($payment);
         });
-        $paymentSecurityToken = array_pop($paymentSecurityTokens);
-        Assert::isInstanceOf($paymentSecurityToken, PaymentSecurityTokenInterface::class);
+        Assert::count($paymentSecurityTokens, 3, sprintf('Expected 3 payment security tokens, got %s.', count($paymentSecurityTokens)));
 
-        return $paymentSecurityToken;
+        $paymentCaptureSecurityToken = $this->extractCaptureSecurityToken($paymentSecurityTokens);
+        $paymentNotifySecurityToken = $this->extractNotifySecurityToken($paymentSecurityTokens);
+
+        return [$paymentCaptureSecurityToken, $paymentNotifySecurityToken];
     }
 
     private function getCurrentPayment(): PaymentInterface
@@ -148,8 +147,11 @@ final class NexiContext implements Context
         return $payment;
     }
 
-    private function assertPageHasValidPaymentDetails(PaymentInterface $payment, PaymentSecurityTokenInterface $token): void
-    {
+    private function assertPageHasValidPaymentDetails(
+        PaymentInterface $payment,
+        PaymentSecurityTokenInterface $captureToken,
+        PaymentSecurityTokenInterface $notifyToken,
+    ): void {
         Assert::eq(
             $this->payumCaptureDoPage->getAlias(),
             PaymentContext::NEXI_ALIAS,
@@ -172,17 +174,17 @@ final class NexiContext implements Context
         );
         Assert::eq(
             $this->payumCaptureDoPage->getSuccessUrl(),
-            $this->getCaptureUrl($token),
+            $this->getCaptureUrl($captureToken),
             'The data to send to Nexi are not valid! Expected a success url equal to %2$s. Got: %s'
         );
         Assert::eq(
             $this->payumCaptureDoPage->getBackUrl(),
-            $this->getCaptureUrl($token),
+            $this->getCaptureUrl($captureToken),
             'The data to send to Nexi are not valid! Expected a back url equal to %2$s. Got: %s'
         );
         Assert::eq(
             $this->payumCaptureDoPage->getPostUrl(),
-            $this->getNotifyUrl($token),
+            $this->getNotifyUrl($notifyToken),
             'The data to send to Nexi are not valid! Expected a post url equal to %2$s. Got: %s'
         );
         Assert::eq(
@@ -245,8 +247,8 @@ final class NexiContext implements Context
     private function getNotifyUrl(PaymentSecurityTokenInterface $token): string
     {
         return $this->urlGenerator->generate(
-            'payum_notify_do_unsafe',
-            ['gateway' => $token->getGatewayName(), 'notify_token' => $token->getHash()],
+            'payum_notify_do',
+            ['payum_token' => $token->getHash()],
             UrlGeneratorInterface::ABSOLUTE_URL
         );
     }
@@ -260,10 +262,13 @@ final class NexiContext implements Context
         );
     }
 
-    private function checkIfAllDataToSendToNexiAreOk(PaymentSecurityTokenInterface $paymentCaptureSecurityToken, PaymentInterface $payment): void
-    {
+    private function checkIfAllDataToSendToNexiAreOk(
+        PaymentSecurityTokenInterface $paymentCaptureSecurityToken,
+        PaymentSecurityTokenInterface $paymentNotifySecurityToken,
+        PaymentInterface $payment,
+    ): void {
         Assert::true($this->payumCaptureDoPage->isOpen(['payum_token' => $paymentCaptureSecurityToken->getHash()]), 'The current page is not the capture page.');
-        $this->assertPageHasValidPaymentDetails($payment, $paymentCaptureSecurityToken);
+        $this->assertPageHasValidPaymentDetails($payment, $paymentCaptureSecurityToken, $paymentNotifySecurityToken);
         Assert::eq($paymentCaptureSecurityToken->getTargetUrl(), $this->getCaptureUrl($paymentCaptureSecurityToken));
     }
 
@@ -286,12 +291,44 @@ final class NexiContext implements Context
         ];
     }
 
-    private function simulateS2SPaymentNotify(PaymentSecurityTokenInterface $token, array $successResponsePayload): void
+    private function simulateS2SPaymentNotify(PaymentSecurityTokenInterface $token, array $responsePayload): void
     {
         $this->client->request(
             'POST',
             $this->getNotifyUrl($token),
-            ['form_params' => $successResponsePayload],
+            ['form_params' => $responsePayload],
         );
+    }
+
+    /**
+     * @param PaymentSecurityTokenInterface[] $paymentSecurityTokens
+     */
+    private function extractCaptureSecurityToken(array $paymentSecurityTokens): PaymentSecurityTokenInterface
+    {
+        /** @var PaymentSecurityTokenInterface $paymentSecurityToken */
+        $paymentCaptureSecurityTokens = array_filter($paymentSecurityTokens, static function (PaymentSecurityTokenInterface $token): bool {
+            return str_contains($token->getTargetUrl(), 'payment/capture');
+        });
+        Assert::count($paymentCaptureSecurityTokens, 1, sprintf('Expected 1 payment capture security token, got %s.', count($paymentCaptureSecurityTokens)));
+        $paymentCaptureSecurityToken = array_pop($paymentCaptureSecurityTokens);
+        Assert::isInstanceOf($paymentCaptureSecurityToken, PaymentSecurityTokenInterface::class);
+
+        return $paymentCaptureSecurityToken;
+    }
+
+    /**
+     * @param PaymentSecurityTokenInterface[] $paymentSecurityTokens
+     */
+    private function extractNotifySecurityToken(array $paymentSecurityTokens): PaymentSecurityTokenInterface
+    {
+        /** @var PaymentSecurityTokenInterface $paymentSecurityToken */
+        $paymentNotifySecurityTokens = array_filter($paymentSecurityTokens, static function (PaymentSecurityTokenInterface $token): bool {
+            return str_contains($token->getTargetUrl(), 'payment/notify');
+        });
+        Assert::count($paymentNotifySecurityTokens, 1, sprintf('Expected 1 payment notify security token, got %s.', count($paymentNotifySecurityTokens)));
+        $paymentNotifySecurityToken = array_pop($paymentNotifySecurityTokens);
+        Assert::isInstanceOf($paymentNotifySecurityToken, PaymentSecurityTokenInterface::class);
+
+        return $paymentNotifySecurityToken;
     }
 }
