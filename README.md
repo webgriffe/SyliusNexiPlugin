@@ -6,32 +6,35 @@
 
 <h1 align="center">Sylius Nexi Plugin</h1>
 
+The _SyliusNexiPlugin_ provides an integration between [Sylius](https://sylius.com/) and [Nexi XPay](https://developer.nexi.it/it/servizio-ecommerce) payment gateway.
+This plugin implements the [Hosted Payment Page](https://developer.nexi.it/it/modalita-di-integrazione/hosted-payment-page) integration method.
+
 > Note! This plugin is only compatible with the Nexi configuration which allows only one payment per request. It is
-> therefore not possible to retry the payment several times on the Nexi checkout!
+> therefore not possible to retry the payment several times on the Nexi checkout,
+> so make sure that your Nexi gateway is configured to not allow payment retry (you'll have to ask to Nexi customer care for this)!
 
-## Documentation
+## Installation
 
-For a comprehensive guide on Sylius Plugins development please go to Sylius documentation,
-there you will find the <a href="https://docs.sylius.com/en/latest/plugin-development-guide/index.html">Plugin Development Guide</a>, that is full of examples.
-
-## Quickstart Installation
-
-1. Run `composer create-project sylius/plugin-skeleton ProjectName`.
-
-2. From the plugin skeleton root directory, run the following commands:
-
-    ```bash
-    $ (cd tests/Application && yarn install)
-    $ (cd tests/Application && yarn build)
-    $ (cd tests/Application && APP_ENV=test bin/console assets:install public)
-    
-    $ (cd tests/Application && APP_ENV=test bin/console doctrine:database:create)
-    $ (cd tests/Application && APP_ENV=test bin/console doctrine:schema:create)
+1. Run
+    ```shell
+    composer require webgriffe/sylius-nexi-plugin
     ```
 
-To be able to setup a plugin's database, remember to configure you database credentials in `tests/Application/.env` and `tests/Application/.env.test`.
+2. Add `Webgriffe\SyliusNexiPlugin\WebgriffeSyliusNexiPlugin::class => ['all' => true]` to your `config/bundles.php`.
 
-## Usage
+3. (Optional) It's suggested to also install the [Payum Lock Request Extension Bundle](https://github.com/webgriffe/PayumLockRequestExtensionBundle):
+    ```shell
+    composer require webgriffe/payum-lock-request-extension-bundle
+    ```
+    and add `Webgriffe\PayumLockRequestExtensionBundle\WebgriffePayumLockRequestExtensionBundle::class => ['all' => true]` to your `config/bundles.php`.
+    This Payum extension avoids issues when concurrent requests are made by the buyer and the Nexi gateway for the same payment.
+
+## Configuration
+
+Go in your Sylius admin panel and create a new payment method. Choose `Nexi Gateway` as the payment gateway and fill the required fields.
+You can also enable the _Sandbox_ mode if you want to test the integration with the [Nexi test environment](https://developer.nexi.it/it/area-test/introduzione).
+
+## Contributing
 
 ### Running plugin tests
 
@@ -96,7 +99,7 @@ To be able to setup a plugin's database, remember to configure you database cred
   vendor/bin/ecs check src
   ```
 
-### Opening Sylius with your plugin
+#### Opening Sylius with your plugin
 
 - Using `test` environment:
 
@@ -111,3 +114,11 @@ To be able to setup a plugin's database, remember to configure you database cred
     (cd tests/Application && APP_ENV=dev bin/console sylius:fixtures:load)
     (cd tests/Application && APP_ENV=dev bin/console server:run -d public)
     ```
+
+## License
+
+This plugin is under the MIT license. See the complete license in the LICENSE file.
+
+## Credits
+
+Developed by [Webgriffe®](http://www.webgriffe.com/).
