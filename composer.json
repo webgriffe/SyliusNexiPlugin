@@ -87,5 +87,8 @@
             "assets:install %PUBLIC_DIR%": "symfony-cmd",
             "security-checker security:check": "script"
         }
+    },
+    "suggest": {
+        "webgriffe/payum-lock-request-extension-bundle": "A Payum extension providing the ability to lock concurrent requests."
     }
 }
