@@ -13,6 +13,7 @@ use Payum\Core\GatewayAwareInterface;
 use Payum\Core\GatewayAwareTrait;
 use Psr\Log\LoggerInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
+use Symfony\Bridge\PsrHttpMessage\Factory\PsrHttpFactory;
 use Webgriffe\LibQuiPago\Lists\SignatureMethod;
 use Webgriffe\LibQuiPago\Notification\Request as LibQuiPagoRequest;
 use Webgriffe\LibQuiPago\Notification\Result;
@@ -91,6 +92,9 @@ abstract class AbstractCaptureAction implements ActionInterface, ApiAwareInterfa
 
             return;
         }
+        $psrHttpFactory = new PsrHttpFactory($psr17Factory, $psr17Factory, $psr17Factory, $psr17Factory);
+        $psrRequest = $psrHttpFactory->createRequest($symfonyRequest);
+
         $serverRequest = ServerRequest::fromGlobals();
         $this->checker->checkSignature(
             LibQuiPagoRequest::buildFromHttpRequest($serverRequest),
