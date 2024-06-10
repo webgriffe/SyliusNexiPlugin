@@ -9,13 +9,13 @@
     "license": "MIT",
     "require": {
         "php": "^8.1",
-        "guzzlehttp/psr7": "^1.6",
+        "guzzlehttp/psr7": "^1.6 || ^2.5",
         "payum/payum": "^1.6",
         "php-http/message-factory": "^1.0",
         "psr/log": "^2.0",
         "sylius/sylius": "^1.12",
         "symfony/webpack-encore-bundle": "^1.15",
-        "webgriffe/lib-quipago": "^2.1"
+        "webgriffe/lib-quipago": "dev-support-guzzle-7"
     },
     "require-dev": {
         "behat/behat": "^3.6.1",
