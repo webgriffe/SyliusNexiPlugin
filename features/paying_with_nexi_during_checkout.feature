@@ -22,6 +22,7 @@ Feature: Paying with nexi during checkout
         And I should see the thank you page
         When I am viewing the summary of my last order
         Then I should see its payment status as "Completed"
+        And Nexi notification about the successful payment should be correctly handled
 
     @ui
     Scenario: Cancelling the payment
@@ -58,5 +59,6 @@ Feature: Paying with nexi during checkout
         And I have proceeded selecting "Nexi payment method" payment method
         When I confirm my order
         And I complete the payment on Nexi without returning to the store
+        And Nexi notify the store about the successful payment
         When I am viewing the summary of my last order
         Then I should see its payment status as "Completed"
