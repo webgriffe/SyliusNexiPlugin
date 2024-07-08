@@ -15,7 +15,7 @@
         "psr/log": "^2.0",
         "sylius/sylius": "^1.12",
         "symfony/webpack-encore-bundle": "^1.15",
-        "webgriffe/lib-quipago": "dev-support-guzzle-7"
+        "webgriffe/lib-quipago": "^3.0"
     },
     "require-dev": {
         "behat/behat": "^3.6.1",
