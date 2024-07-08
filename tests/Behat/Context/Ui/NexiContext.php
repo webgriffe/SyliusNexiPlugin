@@ -6,8 +6,10 @@ namespace Tests\Webgriffe\SyliusNexiPlugin\Behat\Context\Ui;
 
 use Behat\Behat\Context\Context;
 use Behat\Mink\Session;
-use GuzzleHttp\ClientInterface;
+use GuzzleHttp\ClientInterface as GuzzleClientInterface;
+use GuzzleHttp\Psr7\Request;
 use JsonException;
+use Psr\Http\Client\ClientInterface;
 use Sylius\Behat\Page\Shop\Order\ShowPageInterface;
 use Sylius\Bundle\PayumBundle\Model\PaymentSecurityTokenInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
@@ -27,13 +29,13 @@ use Webmozart\Assert\Assert;
 final class NexiContext implements Context
 {
     public function __construct(
-        private PayumCaptureDoPageInterface $payumCaptureDoPage,
-        private RepositoryInterface $paymentTokenRepository,
-        private PaymentRepositoryInterface $paymentRepository,
-        private UrlGeneratorInterface $urlGenerator,
-        private ClientInterface $client,
-        private Session $session,
-        private ShowPageInterface $orderDetails,
+        private readonly PayumCaptureDoPageInterface $payumCaptureDoPage,
+        private readonly RepositoryInterface $paymentTokenRepository,
+        private readonly PaymentRepositoryInterface $paymentRepository,
+        private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly GuzzleClientInterface|ClientInterface $client,
+        private readonly Session $session,
+        private readonly ShowPageInterface $orderDetails,
     ) {
         // TODO: Why config parameters are not loaded?
         $this->urlGenerator->setContext(new RequestContext('', 'GET', '127.0.0.1:8080', 'https'));
@@ -293,6 +295,20 @@ final class NexiContext implements Context
 
     private function simulateS2SPaymentNotify(PaymentSecurityTokenInterface $token, array $responsePayload): void
     {
+        if ($this->client instanceof ClientInterface) {
+            $formParams = http_build_query($responsePayload);
+            $request = new Request(
+                'POST',
+                $this->getNotifyUrl($token),
+                [
+                    'Content-Type' => 'application/x-www-form-urlencoded',
+                ],
+                $formParams,
+            );
+            $this->client->sendRequest($request);
+
+            return;
+        }
         $this->client->request(
             'POST',
             $this->getNotifyUrl($token),
