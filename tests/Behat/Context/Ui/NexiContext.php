@@ -55,10 +55,21 @@ final class NexiContext implements Context
 
         $successResponsePayload = $this->getSuccessResponsePayload($payment);
 
-        $this->simulateS2SPaymentNotify($paymentNotifySecurityToken, $successResponsePayload);
-
         // Simulate coming back from Nexi after completed checkout
         $this->session->getDriver()->visit($paymentCaptureSecurityToken->getTargetUrl() . '?' . http_build_query($successResponsePayload));
+    }
+
+    /**
+     * @When Nexi notify the store about the successful payment
+     * @Then Nexi notification about the successful payment should be correctly handled
+     */
+    public function nexiNotificationAboutTheSuccessfulPaymentShouldBeCorrectlyHandled(): void
+    {
+        $payment = $this->getCurrentPayment();
+        [$paymentCaptureSecurityToken, $paymentNotifySecurityToken] = $this->getCurrentCaptureAndNotifyPaymentSecurityTokens($payment);
+        $successResponsePayload = $this->getSuccessResponsePayload($payment);
+
+        $this->simulateS2SPaymentNotify($paymentNotifySecurityToken, $successResponsePayload);
     }
 
     /**
@@ -81,9 +92,6 @@ final class NexiContext implements Context
             'divisa' => Currency::EURO_CURRENCY_CODE,
             'codTrans' => $this->getPaymentCode($payment),
         ];
-
-        // Simulate S2S payment notify
-        $this->simulateS2SPaymentNotify($paymentNotifySecurityToken, $cancelResponsePayload);
 
         // Simulate coming back from Nexi after completed checkout
         $this->session->getDriver()->visit($paymentCaptureSecurityToken->getTargetUrl() . '?' . http_build_query($cancelResponsePayload));
@@ -118,8 +126,6 @@ final class NexiContext implements Context
         $this->checkIfAllDataToSendToNexiAreOk($paymentCaptureSecurityToken, $paymentNotifySecurityToken, $payment);
 
         $successResponsePayload = $this->getSuccessResponsePayload($payment);
-
-        $this->simulateS2SPaymentNotify($paymentNotifySecurityToken, $successResponsePayload);
     }
 
     /**
