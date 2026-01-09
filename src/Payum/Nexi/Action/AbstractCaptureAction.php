@@ -76,7 +76,7 @@ abstract class AbstractCaptureAction implements ActionInterface, ApiAwareInterfa
         Assert::keyExists($requestParams, Api::RESULT_FIELD, sprintf(
             'The key "%s" does not exists in the parameters coming back from Nexi, let\'s check the documentation [%s] if something has changed!',
             Api::RESULT_FIELD,
-            'https://ecommerce.nexi.it/specifiche-tecniche/codicebase/introduzione.html'
+            'https://ecommerce.nexi.it/specifiche-tecniche/codicebase/introduzione.html',
         ));
 
         $result = (string) $requestParams[Api::RESULT_FIELD];
@@ -95,7 +95,7 @@ abstract class AbstractCaptureAction implements ActionInterface, ApiAwareInterfa
         $this->checker->checkSignature(
             LibQuiPagoRequest::buildFromHttpRequest($serverRequest),
             $this->api->getMacKey(),
-            SignatureMethod::SHA1_METHOD
+            SignatureMethod::SHA1_METHOD,
         );
         $this->logger->info(sprintf(
             'Nexi payment status returned for payment with id "%s" from order with id "%s" is "%s".',

@@ -16,7 +16,7 @@ final class NexiGatewayFactory extends GatewayFactory
                 'payum.factory_name' => 'nexi',
                 'payum.factory_title' => 'Nexi Payment',
                 'payum.action.status' => '@webgriffe_sylius_nexi.action.status',
-            ]
+            ],
         );
 
         if (false === (bool) $config['payum.api']) {

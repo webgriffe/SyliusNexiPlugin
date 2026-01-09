@@ -40,6 +40,7 @@ final class NotifyAction extends AbstractCaptureAction
      * in the main model.
      *
      * @psalm-suppress MoreSpecificImplementedParamType
+     *
      * @phpstan-ignore-next-line
      *
      * @param Notify&Generic $request

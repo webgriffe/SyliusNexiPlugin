@@ -6,10 +6,7 @@ namespace Tests\Webgriffe\SyliusNexiPlugin\Behat\Context\Ui;
 
 use Behat\Behat\Context\Context;
 use Behat\Mink\Session;
-use GuzzleHttp\ClientInterface as GuzzleClientInterface;
-use GuzzleHttp\Psr7\Request;
 use JsonException;
-use Psr\Http\Client\ClientInterface;
 use Sylius\Behat\Page\Shop\Order\ShowPageInterface;
 use Sylius\Behat\Page\Shop\Order\ThankYouPageInterface;
 use Sylius\Bundle\PayumBundle\Model\PaymentSecurityTokenInterface;
@@ -205,57 +202,57 @@ final class NexiContext implements Context
         Assert::eq(
             $this->payumCaptureDoPage->getAlias(),
             PaymentContext::NEXI_ALIAS,
-            'The data to send to Nexi are not valid! Expected an alias equal to %2$s. Got: %s'
+            'The data to send to Nexi are not valid! Expected an alias equal to %2$s. Got: %s',
         );
         Assert::eq(
             $this->payumCaptureDoPage->getAmount(),
             $payment->getAmount(),
-            'The data to send to Nexi are not valid! Expected an amount equal to %2$s. Got: %s'
+            'The data to send to Nexi are not valid! Expected an amount equal to %2$s. Got: %s',
         );
         Assert::eq(
             $this->payumCaptureDoPage->getCurrency(),
             Currency::EURO_CURRENCY_CODE,
-            'The data to send to Nexi are not valid! Expected a currency equal to %2$s. Got: %s'
+            'The data to send to Nexi are not valid! Expected a currency equal to %2$s. Got: %s',
         );
         Assert::eq(
             $this->payumCaptureDoPage->getPaymentCode(),
             $this->getPaymentCode($payment),
-            'The data to send to Nexi are not valid! Expected a payment code equal to %2$s. Got: %s'
+            'The data to send to Nexi are not valid! Expected a payment code equal to %2$s. Got: %s',
         );
         Assert::eq(
             $this->payumCaptureDoPage->getSuccessUrl(),
             $this->getCaptureUrl($captureToken),
-            'The data to send to Nexi are not valid! Expected a success url equal to %2$s. Got: %s'
+            'The data to send to Nexi are not valid! Expected a success url equal to %2$s. Got: %s',
         );
         Assert::eq(
             $this->payumCaptureDoPage->getBackUrl(),
             $this->getCaptureUrl($captureToken),
-            'The data to send to Nexi are not valid! Expected a back url equal to %2$s. Got: %s'
+            'The data to send to Nexi are not valid! Expected a back url equal to %2$s. Got: %s',
         );
         Assert::eq(
             $this->payumCaptureDoPage->getPostUrl(),
             $this->getNotifyUrl($notifyToken),
-            'The data to send to Nexi are not valid! Expected a post url equal to %2$s. Got: %s'
+            'The data to send to Nexi are not valid! Expected a post url equal to %2$s. Got: %s',
         );
         Assert::eq(
             $this->payumCaptureDoPage->getEmail(),
             $payment->getOrder()?->getCustomer()?->getEmail(),
-            'The data to send to Nexi are not valid! Expected an email equal to %2$s. Got: %s'
+            'The data to send to Nexi are not valid! Expected an email equal to %2$s. Got: %s',
         );
         Assert::eq(
             $this->payumCaptureDoPage->getLanguageId(),
             'ENG',
-            'The data to send to Nexi are not valid! Expected a language id equal to %2$s. Got: %s'
+            'The data to send to Nexi are not valid! Expected a language id equal to %2$s. Got: %s',
         );
         Assert::eq(
             $this->payumCaptureDoPage->getDescription(),
             '#' . $payment->getOrder()?->getNumber(),
-            'The data to send to Nexi are not valid! Expected a description equal to %2$s. Got: %s'
+            'The data to send to Nexi are not valid! Expected a description equal to %2$s. Got: %s',
         );
         Assert::eq(
             $this->payumCaptureDoPage->getMac(),
             $this->getMac($payment),
-            'The data to send to Nexi are not valid! Expected a mac equal to %2$s. Got: %s'
+            'The data to send to Nexi are not valid! Expected a mac equal to %2$s. Got: %s',
         );
     }
 
@@ -299,7 +296,7 @@ final class NexiContext implements Context
         return $this->urlGenerator->generate(
             'payum_notify_do',
             ['payum_token' => $token->getHash()],
-            UrlGeneratorInterface::ABSOLUTE_URL
+            UrlGeneratorInterface::ABSOLUTE_URL,
         );
     }
 
@@ -308,7 +305,7 @@ final class NexiContext implements Context
         return $this->urlGenerator->generate(
             'payum_capture_do',
             ['payum_token' => $token->getHash()],
-            UrlGeneratorInterface::ABSOLUTE_URL
+            UrlGeneratorInterface::ABSOLUTE_URL,
         );
     }
 
@@ -331,13 +328,13 @@ final class NexiContext implements Context
             Api::RESULT_FIELD => Result::OUTCOME_OK,
             'messaggio' => 'Transazione autorizzata.',
             'alias' => PaymentContext::NEXI_ALIAS,
-            'importo' => (string)$payment->getAmount(),
+            'importo' => (string) $payment->getAmount(),
             'divisa' => Currency::EURO_CURRENCY_CODE,
             'codTrans' => $this->getPaymentCode($payment),
             'mac' => $this->getResponseMac($payment, Result::OUTCOME_OK, $date, $time, 'OKAY'),
             'data' => $date,
             'orario' => $time,
-            'codAut' => 'OKAY'
+            'codAut' => 'OKAY',
         ];
     }
 

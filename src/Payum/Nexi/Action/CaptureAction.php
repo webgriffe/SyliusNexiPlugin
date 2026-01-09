@@ -38,9 +38,7 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
 {
     use GatewayAwareTrait, ApiAwareTrait, GenericTokenFactoryAwareTrait;
 
-    /**
-     * @var Api
-     */
+    /** @var Api */
     protected $api;
 
     public function __construct(
@@ -61,6 +59,7 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
      * is not yat arrived.
      *
      * @psalm-suppress MoreSpecificImplementedParamType
+     *
      * @phpstan-ignore-next-line
      *
      * @param Capture&Generic|mixed $request
@@ -131,7 +130,7 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
 
         throw new HttpPostRedirect(
             $this->api->getApiEndpoint(),
-            $nexiRequest->getParams()
+            $nexiRequest->getParams(),
         );
     }
 
