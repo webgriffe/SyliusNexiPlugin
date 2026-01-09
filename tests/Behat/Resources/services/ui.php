@@ -16,8 +16,11 @@ return static function (ContainerConfigurator $containerConfigurator) {
             service('sylius.repository.payment_security_token'),
             service('sylius.repository.payment'),
             service('router'),
-            service('sylius.http_client'),
             service('behat.mink.default_session'),
+            service('sylius.behat.page.shop.order.show'),
+            service('webgriffe_sylius_nexi.behat.page.shop.payment.process'),
+            service('sylius.behat.page.shop.order.thank_you'),
+            service('sylius.repository.order'),
             service('sylius.behat.page.shop.order.show'),
         ])
     ;

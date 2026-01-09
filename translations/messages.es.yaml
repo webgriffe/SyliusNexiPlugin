@@ -1,0 +1,12 @@
+webgriffe_sylius_nexi:
+    ui:
+        processing_payment: '¡Estamos procesando tu pago!'
+        please_wait: '¡Espere hasta que vea una nueva página de estado!'
+        loading: 'Cargando'
+        return_to_nexi_checkout: 'Haga clic aquí si desea volver al pago de Klarna para completar su pago.'
+    form:
+        gateway_configuration:
+            username: 'Nombre de usuario'
+            password: 'Contraseña'
+            server_region: 'Región del servidor'
+            sandbox: 'Modo de prueba'

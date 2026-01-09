@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Webgriffe\SyliusNexiPlugin\Behat\Page\Shop\Payment;
 
-interface ProcessPageInterface
+use FriendsOfBehat\PageObjectExtension\Page\SymfonyPageInterface;
+
+interface ProcessPageInterface extends SymfonyPageInterface
 {
     public function waitForRedirect(): void;
 }

@@ -13,44 +13,61 @@ Feature: Paying with nexi during checkout
         And I am logged in as "john@example.com"
 
     @ui
+    Scenario: Send right data to Nexi during payment initiation
+        Given I added product "PHP T-Shirt" to the cart
+        And I have proceeded selecting "Nexi payment method" payment method
+        When I confirm my order
+        Then I should see be successfully redirected to Nexi payment gateway
+
+    @ui @javascript
     Scenario: Successful payment
         Given I added product "PHP T-Shirt" to the cart
         And I have proceeded selecting "Nexi payment method" payment method
         When I confirm my order
         And I complete the payment on Nexi
-        Then I should be notified that my payment has been completed
-        And I should see the thank you page
+        Then I should be on the waiting payment processing page
+        When Nexi notify the store about the successful payment
+        Then I should be redirected to the thank you page
+        And I should be notified that my payment has been completed
         When I am viewing the summary of my last order
         Then I should see its payment status as "Completed"
 
-    @ui
+    @ui @javascript
+    Scenario: Failed payment
+        Given I added product "PHP T-Shirt" to the cart
+        And I have proceeded selecting "Nexi payment method" payment method
+        When I confirm my order
+        And I complete the payment on Nexi
+        Then I should be on the waiting payment processing page
+        When Nexi notify the store about the failed payment
+        Then I should be redirected to the order page
+        And I should be notified that my payment is failed
+        And I should be able to pay again
+
+    @ui @javascript
     Scenario: Cancelling the payment
         Given I added product "PHP T-Shirt" to the cart
         And I have proceeded selecting "Nexi payment method" payment method
         When I confirm my order
-        And I cancel my Nexi payment
-        Then I should be notified that my payment has been cancelled
+        And I cancel the payment on Nexi
+        Then I should be on the waiting payment processing page
+        When Nexi notify the store about the cancelled payment
+        Then I should be redirected to the order page
+        And I should be notified that my payment has been cancelled
         And I should be able to pay again
 
-    @ui
+    @ui @javascript
     Scenario: Retrying the payment with success
         Given I added product "PHP T-Shirt" to the cart
         And I have proceeded selecting "Nexi payment method" payment method
         And I have confirmed order
         But I have cancelled Nexi payment
-        When I try to complete pay again with Nexi
-        Then I should be notified that my payment has been completed
-        And I should see the thank you page
-
-    @ui
-    Scenario: Retrying the payment and failing
-        Given I added product "PHP T-Shirt" to the cart
-        And I have proceeded selecting "Nexi payment method" payment method
-        And I have confirmed my order with paypal payment
-        But I have cancelled Nexi payment
-        When I try to cancel the payment again with Nexi
-        Then I should be notified that my payment has been cancelled
-        And I should be able to pay again
+        And Nexi notify the store about the cancelled payment
+        Then I should be redirected to the order page
+        When I try to pay again with Nexi
+        And Nexi notify the store about the successful payment
+        Then I should be redirected to the thank you page
+        And I should be notified that my payment has been completed
 
     @ui
     Scenario: Successful payment even without returning to the store
@@ -58,5 +75,6 @@ Feature: Paying with nexi during checkout
         And I have proceeded selecting "Nexi payment method" payment method
         When I confirm my order
         And I complete the payment on Nexi without returning to the store
-        When I am viewing the summary of my last order
+        And Nexi notify the store about the successful payment
+        And I am viewing the summary of my last order
         Then I should see its payment status as "Completed"
