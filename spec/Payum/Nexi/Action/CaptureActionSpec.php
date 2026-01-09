@@ -22,6 +22,8 @@ use stdClass;
 use Sylius\Bundle\PayumBundle\Model\PaymentSecurityTokenInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Routing\RouterInterface;
 use Webgriffe\LibQuiPago\Lists\SignatureMethod;
 use Webgriffe\LibQuiPago\Notification\Result;
 use Webgriffe\LibQuiPago\PaymentInit\Request;
@@ -40,8 +42,6 @@ final class CaptureActionSpec extends ObjectBehavior
 
     public function let(
         Signer $signer,
-        Checker $checker,
-        RequestParamsDecoderInterface $decoder,
         LoggerInterface $logger,
         PaymentInterface $payment,
         GatewayInterface $gateway,
@@ -53,6 +53,8 @@ final class CaptureActionSpec extends ObjectBehavior
         GenericTokenFactoryInterface $tokenFactory,
         TokenInterface $notifyToken,
         IdentityInterface $tokenIdentity,
+        RequestStack $requestStack,
+        RouterInterface $router,
     ): void {
         $order->getId()->willReturn(1);
 
@@ -70,11 +72,11 @@ final class CaptureActionSpec extends ObjectBehavior
 
         $this->beConstructedWith(
             $signer,
-            $checker,
-            $decoder,
             $logger,
             $requestFactory,
             $getHttpRequestFactory,
+            $requestStack,
+            $router,
         );
         $this->setGenericTokenFactory($tokenFactory);
         $this->setGateway($gateway);
