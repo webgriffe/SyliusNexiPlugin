@@ -17,11 +17,11 @@ return static function (ContainerConfigurator $containerConfigurator) {
         ->public()
         ->args([
             service('webgriffe_sylius_nexi.lib.signer'),
-            service('webgriffe_sylius_nexi.lib.checker'),
-            service('webgriffe_sylius_nexi.decoder.request_params'),
             service('webgriffe_sylius_nexi.logger'),
             service('webgriffe_sylius_nexi.factory.request'),
             service('webgriffe_sylius_nexi.factory.get_http_request'),
+            service('request_stack'),
+            service('router'),
         ])
         ->tag('payum.action', ['factory' => Api::CODE, 'alias' => 'payum.action.capture'])
     ;

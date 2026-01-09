@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Webgriffe\SyliusNexiPlugin\Behat\Page\Shop\Payum\Capture;
 
 use FriendsOfBehat\PageObjectExtension\Page\SymfonyPage;
+use Webmozart\Assert\Assert;
 
 final class PayumCaptureDoPage extends SymfonyPage implements PayumCaptureDoPageInterface
 {
@@ -20,52 +21,82 @@ final class PayumCaptureDoPage extends SymfonyPage implements PayumCaptureDoPage
 
     public function getAlias(): string
     {
-        return $this->getElement('alias')->getValue();
+        $value = $this->getElement('alias')->getValue();
+        Assert::string($value);
+
+        return $value;
     }
 
     public function getSuccessUrl(): string
     {
-        return $this->getElement('urlSuccess')->getValue();
+        $value = $this->getElement('urlSuccess')->getValue();
+        Assert::string($value);
+
+        return $value;
     }
 
     public function getCurrency(): string
     {
-        return $this->getElement('currency')->getValue();
+        $value = $this->getElement('currency')->getValue();
+        Assert::string($value);
+
+        return $value;
     }
 
     public function getPaymentCode(): string
     {
-        return $this->getElement('paymentCode')->getValue();
+        $value = $this->getElement('paymentCode')->getValue();
+        Assert::string($value);
+
+        return $value;
     }
 
     public function getBackUrl(): string
     {
-        return $this->getElement('urlBack')->getValue();
+        $value = $this->getElement('urlBack')->getValue();
+        Assert::string($value);
+
+        return $value;
     }
 
     public function getPostUrl(): string
     {
-        return $this->getElement('urlPost')->getValue();
+        $value = $this->getElement('urlPost')->getValue();
+        Assert::string($value);
+
+        return $value;
     }
 
     public function getEmail(): string
     {
-        return $this->getElement('email')->getValue();
+        $value = $this->getElement('email')->getValue();
+        Assert::string($value);
+
+        return $value;
     }
 
     public function getLanguageId(): string
     {
-        return $this->getElement('languageId')->getValue();
+        $value = $this->getElement('languageId')->getValue();
+        Assert::string($value);
+
+        return $value;
     }
 
     public function getDescription(): string
     {
-        return $this->getElement('description')->getValue();
+        $value = $this->getElement('description')->getValue();
+        Assert::string($value);
+
+        return $value;
     }
 
     public function getMac(): string
     {
-        return $this->getElement('mac')->getValue();
+        $value = $this->getElement('mac')->getValue();
+        Assert::string($value);
+
+        return $value;
     }
 
     protected function getDefinedElements(): array

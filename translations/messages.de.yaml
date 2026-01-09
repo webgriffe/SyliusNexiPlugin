@@ -1,0 +1,12 @@
+webgriffe_sylius_nexi:
+    ui:
+        processing_payment: 'Ihre Zahlung wird bearbeitet!'
+        please_wait: 'Bitte warten Sie, bis Sie eine neue Statusseite sehen!'
+        loading: 'Laden'
+        return_to_nexi_checkout: 'Klicken Sie hier, wenn Sie zum Klarna-Checkout zurückkehren möchten, um Ihre Zahlung abzuschließen.'
+    form:
+        gateway_configuration:
+            username: 'Benutzername'
+            password: 'Passwort'
+            server_region: 'Serverregion'
+            sandbox: 'Sandbox-Modus'

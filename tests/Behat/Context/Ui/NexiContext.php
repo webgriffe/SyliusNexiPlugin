@@ -11,13 +11,17 @@ use GuzzleHttp\Psr7\Request;
 use JsonException;
 use Psr\Http\Client\ClientInterface;
 use Sylius\Behat\Page\Shop\Order\ShowPageInterface;
+use Sylius\Behat\Page\Shop\Order\ThankYouPageInterface;
 use Sylius\Bundle\PayumBundle\Model\PaymentSecurityTokenInterface;
+use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
+use Sylius\Component\Core\Repository\OrderRepositoryInterface;
 use Sylius\Component\Core\Repository\PaymentRepositoryInterface;
-use Sylius\Component\Resource\Repository\RepositoryInterface;
+use Sylius\Resource\Doctrine\Persistence\RepositoryInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RequestContext;
 use Tests\Webgriffe\SyliusNexiPlugin\Behat\Context\Setup\PaymentContext;
+use Tests\Webgriffe\SyliusNexiPlugin\Behat\Page\Shop\Payment\ProcessPageInterface;
 use Tests\Webgriffe\SyliusNexiPlugin\Behat\Page\Shop\Payum\Capture\PayumCaptureDoPageInterface;
 use Webgriffe\LibQuiPago\Lists\Currency;
 use Webgriffe\LibQuiPago\Lists\SignatureMethod;
@@ -28,14 +32,22 @@ use Webmozart\Assert\Assert;
 
 final class NexiContext implements Context
 {
+    /**
+     * @param RepositoryInterface<PaymentSecurityTokenInterface> $paymentTokenRepository
+     * @param PaymentRepositoryInterface<PaymentInterface> $paymentRepository
+     * @param OrderRepositoryInterface<OrderInterface> $orderRepository
+     */
     public function __construct(
         private readonly PayumCaptureDoPageInterface $payumCaptureDoPage,
         private readonly RepositoryInterface $paymentTokenRepository,
         private readonly PaymentRepositoryInterface $paymentRepository,
         private readonly UrlGeneratorInterface $urlGenerator,
-        private readonly GuzzleClientInterface|ClientInterface $client,
         private readonly Session $session,
         private readonly ShowPageInterface $orderDetails,
+        private readonly ProcessPageInterface $paymentProcessPage,
+        private readonly ThankYouPageInterface $thankYouPage,
+        private readonly OrderRepositoryInterface $orderRepository,
+        private readonly ShowPageInterface $orderShowPage,
     ) {
         // TODO: Why config parameters are not loaded?
         $this->urlGenerator->setContext(new RequestContext('', 'GET', '127.0.0.1:8080', 'https'));
@@ -49,30 +61,36 @@ final class NexiContext implements Context
     public function iCompleteThePaymentOnNexi(): void
     {
         $payment = $this->getCurrentPayment();
+        [$paymentCaptureSecurityToken] = $this->getCurrentCaptureAndNotifyPaymentSecurityTokens($payment);
+        $successResponsePayload = $this->getSuccessResponsePayload($payment);
+
+        // Simulate coming back from Nexi after completed checkout
+        // Even if not read, we leave the Nexi parameters in the URL to simulate a real coming back from Nexi
+        $this->session->getDriver()->visit($paymentCaptureSecurityToken->getTargetUrl() . '?' . http_build_query($successResponsePayload));
+    }
+
+    /**
+     * @Then /^I should see be successfully redirected to Nexi payment gateway$/
+     */
+    public function iShouldSeeBeSuccessfullyRedirectedToNexiPaymentGateway(): void
+    {
+        $payment = $this->getCurrentPayment();
         [$paymentCaptureSecurityToken, $paymentNotifySecurityToken] = $this->getCurrentCaptureAndNotifyPaymentSecurityTokens($payment);
 
         $this->checkIfAllDataToSendToNexiAreOk($paymentCaptureSecurityToken, $paymentNotifySecurityToken, $payment);
-
-        $successResponsePayload = $this->getSuccessResponsePayload($payment);
-
-        $this->simulateS2SPaymentNotify($paymentNotifySecurityToken, $successResponsePayload);
-
-        // Simulate coming back from Nexi after completed checkout
-        $this->session->getDriver()->visit($paymentCaptureSecurityToken->getTargetUrl() . '?' . http_build_query($successResponsePayload));
     }
 
     /**
      * @Given /^I have cancelled (?:|my )Nexi payment$/
      * @When /^I cancel (?:|my )Nexi payment$/
+     * @When /^I cancel the payment on Nexi$/
      *
      * @throws JsonException
      */
     public function iCancelMyNexiPayment(): void
     {
         $payment = $this->getCurrentPayment();
-        [$paymentCaptureSecurityToken, $paymentNotifySecurityToken] = $this->getCurrentCaptureAndNotifyPaymentSecurityTokens($payment);
-
-        $this->checkIfAllDataToSendToNexiAreOk($paymentCaptureSecurityToken, $paymentNotifySecurityToken, $payment);
+        [$paymentCaptureSecurityToken] = $this->getCurrentCaptureAndNotifyPaymentSecurityTokens($payment);
 
         $cancelResponsePayload = [
             Api::RESULT_FIELD => Result::OUTCOME_ANNULLO,
@@ -82,15 +100,12 @@ final class NexiContext implements Context
             'codTrans' => $this->getPaymentCode($payment),
         ];
 
-        // Simulate S2S payment notify
-        $this->simulateS2SPaymentNotify($paymentNotifySecurityToken, $cancelResponsePayload);
-
         // Simulate coming back from Nexi after completed checkout
         $this->session->getDriver()->visit($paymentCaptureSecurityToken->getTargetUrl() . '?' . http_build_query($cancelResponsePayload));
     }
 
     /**
-     * @When /^I try to complete pay again with Nexi$/
+     * @When /^I try to pay again with Nexi$/
      */
     public function iTryToCompletePayAgainWithNexi(): void
     {
@@ -112,14 +127,7 @@ final class NexiContext implements Context
      */
     public function iCompleteThePaymentOnNexiWithoutReturningToTheStore(): void
     {
-        $payment = $this->getCurrentPayment();
-        [$paymentCaptureSecurityToken, $paymentNotifySecurityToken] = $this->getCurrentCaptureAndNotifyPaymentSecurityTokens($payment);
-
-        $this->checkIfAllDataToSendToNexiAreOk($paymentCaptureSecurityToken, $paymentNotifySecurityToken, $payment);
-
-        $successResponsePayload = $this->getSuccessResponsePayload($payment);
-
-        $this->simulateS2SPaymentNotify($paymentNotifySecurityToken, $successResponsePayload);
+        // Do nothing
     }
 
     /**
@@ -129,8 +137,37 @@ final class NexiContext implements Context
     {
         $payment = $this->getCurrentPayment();
         $this->paymentProcessPage->verify([
-            'tokenValue' => $payment->getOrder()->getTokenValue(),
+            'tokenValue' => $payment->getOrder()?->getTokenValue(),
         ]);
+    }
+
+    /**
+     * @Then /^I should be redirected to the thank you page$/
+     */
+    public function iShouldBeRedirectedToTheThankYouPage(): void
+    {
+        $this->paymentProcessPage->waitForRedirect();
+        Assert::true($this->thankYouPage->hasThankYouMessage());
+    }
+
+    /**
+     * @Then /^I should be redirected to the order page$/
+     */
+    public function iShouldBeRedirectedToTheOrderPage(): void
+    {
+        $this->paymentProcessPage->waitForRedirect();
+        $orders = $this->orderRepository->findAll();
+        $order = reset($orders);
+        Assert::isInstanceOf($order, OrderInterface::class);
+        Assert::true($this->orderShowPage->isOpen(['tokenValue' => $order->getTokenValue()]));
+    }
+
+    /**
+     * @Then I should be notified that my payment is failed
+     */
+    public function iShouldBeNotifiedThatMyPaymentHasBeenCancelled(): void
+    {
+        $this->assertNotification('Payment has failed.');
     }
 
     /**
@@ -202,7 +239,7 @@ final class NexiContext implements Context
         );
         Assert::eq(
             $this->payumCaptureDoPage->getEmail(),
-            $payment->getOrder()->getCustomer()->getEmail(),
+            $payment->getOrder()?->getCustomer()?->getEmail(),
             'The data to send to Nexi are not valid! Expected an email equal to %2$s. Got: %s'
         );
         Assert::eq(
@@ -212,7 +249,7 @@ final class NexiContext implements Context
         );
         Assert::eq(
             $this->payumCaptureDoPage->getDescription(),
-            '#' . $payment->getOrder()->getNumber(),
+            '#' . $payment->getOrder()?->getNumber(),
             'The data to send to Nexi are not valid! Expected a description equal to %2$s. Got: %s'
         );
         Assert::eq(
@@ -254,7 +291,7 @@ final class NexiContext implements Context
 
     private function getPaymentCode(PaymentInterface $payment): string
     {
-        return (string)$payment->getOrder()->getNumber() . '-' . (string)$payment->getId();
+        return $payment->getOrder()?->getNumber() . '-' . $payment->getId();
     }
 
     private function getNotifyUrl(PaymentSecurityTokenInterface $token): string
@@ -304,43 +341,17 @@ final class NexiContext implements Context
         ];
     }
 
-    private function simulateS2SPaymentNotify(PaymentSecurityTokenInterface $token, array $responsePayload): void
-    {
-        if ($this->client instanceof ClientInterface) {
-            $formParams = http_build_query($responsePayload);
-            $request = new Request(
-                'POST',
-                $this->getNotifyUrl($token),
-                [
-                    'Content-Type' => 'application/x-www-form-urlencoded',
-                ],
-                $formParams,
-            );
-            $this->client->sendRequest($request);
-
-            return;
-        }
-        $this->client->request(
-            'POST',
-            $this->getNotifyUrl($token),
-            ['form_params' => $responsePayload],
-        );
-    }
-
     /**
      * @param PaymentSecurityTokenInterface[] $paymentSecurityTokens
      */
     private function extractCaptureSecurityToken(array $paymentSecurityTokens): PaymentSecurityTokenInterface
     {
-        /** @var PaymentSecurityTokenInterface $paymentSecurityToken */
         $paymentCaptureSecurityTokens = array_filter($paymentSecurityTokens, static function (PaymentSecurityTokenInterface $token): bool {
             return str_contains($token->getTargetUrl(), 'payment/capture');
         });
         Assert::count($paymentCaptureSecurityTokens, 1, sprintf('Expected 1 payment capture security token, got %s.', count($paymentCaptureSecurityTokens)));
-        $paymentCaptureSecurityToken = array_pop($paymentCaptureSecurityTokens);
-        Assert::isInstanceOf($paymentCaptureSecurityToken, PaymentSecurityTokenInterface::class);
 
-        return $paymentCaptureSecurityToken;
+        return array_pop($paymentCaptureSecurityTokens);
     }
 
     /**
@@ -348,14 +359,26 @@ final class NexiContext implements Context
      */
     private function extractNotifySecurityToken(array $paymentSecurityTokens): PaymentSecurityTokenInterface
     {
-        /** @var PaymentSecurityTokenInterface $paymentSecurityToken */
         $paymentNotifySecurityTokens = array_filter($paymentSecurityTokens, static function (PaymentSecurityTokenInterface $token): bool {
             return str_contains($token->getTargetUrl(), 'payment/notify');
         });
         Assert::count($paymentNotifySecurityTokens, 1, sprintf('Expected 1 payment notify security token, got %s.', count($paymentNotifySecurityTokens)));
-        $paymentNotifySecurityToken = array_pop($paymentNotifySecurityTokens);
-        Assert::isInstanceOf($paymentNotifySecurityToken, PaymentSecurityTokenInterface::class);
 
-        return $paymentNotifySecurityToken;
+        return array_pop($paymentNotifySecurityTokens);
+    }
+
+    private function assertNotification(string $expectedNotification): void
+    {
+        $notifications = $this->orderDetails->getNotifications();
+        $hasNotifications = '';
+
+        foreach ($notifications as $notification) {
+            $hasNotifications .= $notification;
+            if ($notification === $expectedNotification) {
+                return;
+            }
+        }
+
+        throw new \RuntimeException(sprintf('There is no notification with "%s". Got "%s"', $expectedNotification, $hasNotifications));
     }
 }
