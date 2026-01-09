@@ -35,6 +35,7 @@ final class NotifyNullAction implements ActionInterface, GatewayAwareInterface
      * the query parameter. See Payum\Be2Bill\Action\NotifyNullAction to have a look to another example.
      *
      * @psalm-suppress MoreSpecificImplementedParamType
+     *
      * @phpstan-ignore-next-line
      *
      * @param Notify&Generic $request

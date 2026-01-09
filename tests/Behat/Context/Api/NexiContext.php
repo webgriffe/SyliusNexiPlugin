@@ -20,7 +20,6 @@ use Webgriffe\LibQuiPago\Lists\Currency;
 use Webgriffe\LibQuiPago\Lists\SignatureMethod;
 use Webgriffe\LibQuiPago\Notification\Result;
 use Webgriffe\LibQuiPago\Signature\DefaultSignatureHashingManager;
-use Webgriffe\SyliusKlarnaPaymentsPlugin\Client\Enum\HostedPaymentPageSessionStatus;
 use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
 
 final class NexiContext implements Context
@@ -40,7 +39,6 @@ final class NexiContext implements Context
         // TODO: Why config parameters are not loaded?
         $this->urlGenerator->setContext(new RequestContext('', 'GET', '127.0.0.1:8080', 'https'));
     }
-
 
     /**
      * @When Nexi notify the store about the successful payment
@@ -159,7 +157,7 @@ final class NexiContext implements Context
             'mac' => $this->getResponseMac($payment, Result::OUTCOME_OK, $date, $time, 'OKAY'),
             'data' => $date,
             'orario' => $time,
-            'codAut' => 'OKAY'
+            'codAut' => 'OKAY',
         ];
     }
 
@@ -178,7 +176,7 @@ final class NexiContext implements Context
             'mac' => $this->getResponseMac($payment, Result::OUTCOME_KO, $date, $time, 'OKAY'),
             'data' => $date,
             'orario' => $time,
-            'codAut' => 'OKAY'
+            'codAut' => 'OKAY',
         ];
     }
 

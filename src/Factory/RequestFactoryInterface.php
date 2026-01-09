@@ -14,6 +14,6 @@ interface RequestFactoryInterface
         string $merchantAlias,
         PaymentInterface $payment,
         TokenInterface $token,
-        TokenInterface $notifyToken
+        TokenInterface $notifyToken,
     ): Request;
 }

@@ -25,7 +25,7 @@ class NexiConfigurationType extends AbstractType
                         'No' => false,
                     ],
                     'label' => 'Sanbox Mode Enabled',
-                ]
+                ],
             )
         ;
     }

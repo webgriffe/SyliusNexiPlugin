@@ -14,6 +14,7 @@ use Sylius\Component\Payment\Repository\PaymentMethodRepositoryInterface;
 final class PaymentContext implements Context
 {
     public const NEXI_ALIAS = 'ALIAS_WEB_111111';
+
     public const NEXI_MAC_KEY = '83Y4TDI8W7Y4EWIY48TWT';
 
     /**
@@ -51,7 +52,7 @@ final class PaymentContext implements Context
         string $gatewayFactory = 'Nexi Simple Payment Checkout',
         string $description = '',
         bool $addForCurrentChannel = true,
-        ?int $position = null
+        ?int $position = null,
     ): PaymentMethodInterface {
         $gatewayFactory = array_search($gatewayFactory, $this->gatewayFactories, true);
 
