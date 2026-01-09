@@ -41,9 +41,9 @@ final class RequestParamsDecoder implements RequestParamsDecoderInterface
                 '/[\x80-\xFF]+/',
                 /** @param string[] $m */
                 static function (array $m): string {
-                    return utf8_encode($m[0]);
+                    return mb_convert_encoding($m[0], 'UTF-8', 'ISO-8859-1');
                 },
-                $data
+                $data,
             );
             if (!is_string($data)) {
                 $pcreErrorCode = preg_last_error();
@@ -53,7 +53,7 @@ final class RequestParamsDecoder implements RequestParamsDecoderInterface
             $data = str_replace(
                 ['¤', '¦', '¨', '´', '¸', '¼', '½', '¾'],
                 ['€', 'Š', 'š', 'Ž', 'ž', 'Œ', 'œ', 'Ÿ'],
-                $data
+                $data,
             );
         }
 

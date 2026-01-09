@@ -17,7 +17,7 @@ final class RequestFactory implements RequestFactoryInterface
         string $merchantAlias,
         PaymentInterface $payment,
         TokenInterface $token,
-        TokenInterface $notifyToken
+        TokenInterface $notifyToken,
     ): Request {
         $order = $payment->getOrder();
         Assert::isInstanceOf($order, OrderInterface::class);
@@ -42,7 +42,7 @@ final class RequestFactory implements RequestFactoryInterface
             $notifyToken->getTargetUrl(),
             null,
             null,
-            '#' . (string) $order->getNumber()
+            '#' . (string) $order->getNumber(),
         );
     }
 

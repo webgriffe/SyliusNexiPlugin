@@ -14,8 +14,12 @@ use Sylius\Component\Payment\Repository\PaymentMethodRepositoryInterface;
 final class PaymentContext implements Context
 {
     public const NEXI_ALIAS = 'ALIAS_WEB_111111';
+
     public const NEXI_MAC_KEY = '83Y4TDI8W7Y4EWIY48TWT';
 
+    /**
+     * @param PaymentMethodRepositoryInterface<PaymentMethodInterface> $paymentMethodRepository
+     */
     public function __construct(
         private SharedStorageInterface $sharedStorage,
         private PaymentMethodRepositoryInterface $paymentMethodRepository,
@@ -29,11 +33,11 @@ final class PaymentContext implements Context
      * @Given the store has (also) a payment method :paymentMethodName with a code :paymentMethodCode and Nexi Simple Payment Checkout gateway
      */
     public function theStoreHasPaymentMethodWithCodeAndPaypalExpressCheckoutGateway(
-        $paymentMethodName,
-        $paymentMethodCode
+        string $paymentMethodName,
+        string $paymentMethodCode,
     ): void {
-        $paymentMethod = $this->createPaymentMethod($paymentMethodName, $paymentMethodCode, 'Nexi Simple Payment Checkout');
-        $paymentMethod->getGatewayConfig()->setConfig([
+        $paymentMethod = $this->createPaymentMethod($paymentMethodName, $paymentMethodCode);
+        $paymentMethod->getGatewayConfig()?->setConfig([
             'sandbox' => false,
             'alias' => self::NEXI_ALIAS,
             'mac_key' => self::NEXI_MAC_KEY,
@@ -48,7 +52,7 @@ final class PaymentContext implements Context
         string $gatewayFactory = 'Nexi Simple Payment Checkout',
         string $description = '',
         bool $addForCurrentChannel = true,
-        ?int $position = null
+        ?int $position = null,
     ): PaymentMethodInterface {
         $gatewayFactory = array_search($gatewayFactory, $this->gatewayFactories, true);
 
@@ -64,7 +68,7 @@ final class PaymentContext implements Context
         ]);
 
         if (null !== $position) {
-            $paymentMethod->setPosition((int) $position);
+            $paymentMethod->setPosition($position);
         }
 
         $this->sharedStorage->set('payment_method', $paymentMethod);

@@ -28,6 +28,7 @@ final class StatusAction implements ActionInterface
      * method will be executed and the payment state will change, if needed.
      *
      * @psalm-suppress MoreSpecificImplementedParamType
+     *
      * @phpstan-ignore-next-line
      *
      * @param GetStatusInterface&Generic $request
@@ -35,7 +36,6 @@ final class StatusAction implements ActionInterface
     public function execute($request): void
     {
         RequestNotSupportedException::assertSupports($this, $request);
-
         /** @var SyliusPaymentInterface $payment */
         $payment = $request->getFirstModel();
 
@@ -45,7 +45,7 @@ final class StatusAction implements ActionInterface
             $this->logger->warning(sprintf(
                 'Unable to mark the request for payment with id "%s" from order with id "%s": the payment details are empty.',
                 (string) $payment->getId(),
-                (string) $payment->getOrder()?->getId()
+                (string) $payment->getOrder()?->getId(),
             ));
 
             return;
@@ -53,7 +53,7 @@ final class StatusAction implements ActionInterface
         Assert::keyExists($paymentDetails, Api::RESULT_FIELD, sprintf(
             'The key "%s" does not exists in the payment details captured, let\'s check the documentation [%s] if something has changed!',
             Api::RESULT_FIELD,
-            'https://ecommerce.nexi.it/specifiche-tecniche/codicebase/introduzione.html'
+            'https://ecommerce.nexi.it/specifiche-tecniche/codicebase/introduzione.html',
         ));
 
         $result = (string) $paymentDetails[Api::RESULT_FIELD];
@@ -61,7 +61,7 @@ final class StatusAction implements ActionInterface
             $this->logger->info(sprintf(
                 'Request captured for payment with id "%s" from order with id "%s".',
                 (string) $payment->getId(),
-                (string) $payment->getOrder()?->getId()
+                (string) $payment->getOrder()?->getId(),
             ), $paymentDetails);
             $request->markCaptured();
 
@@ -72,7 +72,7 @@ final class StatusAction implements ActionInterface
             $this->logger->notice(sprintf(
                 'Request canceled for payment with id "%s" from order with id "%s".',
                 (string) $payment->getId(),
-                (string) $payment->getOrder()?->getId()
+                (string) $payment->getOrder()?->getId(),
             ), $paymentDetails);
             $request->markCanceled();
 
@@ -83,7 +83,7 @@ final class StatusAction implements ActionInterface
             $this->logger->warning(sprintf(
                 'Request failed for payment with id "%s" from order with id "%s".',
                 (string) $payment->getId(),
-                (string) $payment->getOrder()?->getId()
+                (string) $payment->getOrder()?->getId(),
             ), $paymentDetails);
             $request->markFailed();
 
