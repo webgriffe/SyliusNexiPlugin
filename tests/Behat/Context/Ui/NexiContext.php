@@ -123,6 +123,17 @@ final class NexiContext implements Context
     }
 
     /**
+     * @Then I should be on the waiting payment processing page
+     */
+    public function iShouldBeOnTheWaitingPaymentProcessingPage(): void
+    {
+        $payment = $this->getCurrentPayment();
+        $this->paymentProcessPage->verify([
+            'tokenValue' => $payment->getOrder()->getTokenValue(),
+        ]);
+    }
+
+    /**
      * @return array{PaymentSecurityTokenInterface, PaymentSecurityTokenInterface}
      */
     private function getCurrentCaptureAndNotifyPaymentSecurityTokens(PaymentInterface $payment): array
