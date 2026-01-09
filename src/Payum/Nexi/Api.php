@@ -6,6 +6,8 @@ namespace Webgriffe\SyliusNexiPlugin\Payum\Nexi;
 
 final class Api
 {
+    public const CODE = 'nexi';
+
     public const API_URL_TEST = 'https://int-ecommerce.nexi.it/ecomm/ecomm/DispatcherServlet';
 
     public const API_URL_LIVE = 'https://ecommerce.nexi.it/ecomm/ecomm/DispatcherServlet';
