@@ -47,7 +47,7 @@
         "symfony/flex": "^2.4",
         "symfony/intl": "^5.4 || ^6.4",
         "symfony/web-profiler-bundle": "^5.4 || ^6.4",
-        "vimeo/psalm": "4.27.0"
+        "vimeo/psalm": "^5.0"
     },
     "config": {
         "sort-packages": true,
@@ -55,6 +55,9 @@
             "dealerdirect/phpcodesniffer-composer-installer": false,
             "phpstan/extension-installer": true,
             "symfony/flex": true
+        },
+        "audit": {
+            "block-insecure": false
         }
     },
     "extra": {
