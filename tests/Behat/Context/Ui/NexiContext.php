@@ -54,7 +54,7 @@ final class NexiContext implements Context
     }
 
     /**
-     * @When /^I complete the payment on Nexi$/
+     * @When I complete the payment on Nexi
      *
      * @throws JsonException
      */
@@ -70,7 +70,7 @@ final class NexiContext implements Context
     }
 
     /**
-     * @Then /^I should see be successfully redirected to Nexi payment gateway$/
+     * @Then I should see be successfully redirected to Nexi payment gateway
      */
     public function iShouldSeeBeSuccessfullyRedirectedToNexiPaymentGateway(): void
     {
@@ -110,7 +110,7 @@ final class NexiContext implements Context
     }
 
     /**
-     * @When /^I try to pay again with Nexi$/
+     * @When I try to pay again with Nexi
      */
     public function iTryToCompletePayAgainWithNexi(): void
     {
@@ -119,16 +119,7 @@ final class NexiContext implements Context
     }
 
     /**
-     * @When /^I try to cancel the payment again with Nexi$/
-     */
-    public function iTryToCancelThePaymentAgainWithNexi(): void
-    {
-        $this->orderDetails->pay();
-        $this->iCancelMyNexiPayment();
-    }
-
-    /**
-     * @Given /^I complete the payment on Nexi without returning to the store$/
+     * @Given I complete the payment on Nexi without returning to the store
      */
     public function iCompleteThePaymentOnNexiWithoutReturningToTheStore(): void
     {
@@ -155,7 +146,7 @@ final class NexiContext implements Context
     }
 
     /**
-     * @Then /^I should be redirected to the thank you page$/
+     * @Then I should be redirected to the thank you page
      */
     public function iShouldBeRedirectedToTheThankYouPage(): void
     {
@@ -164,7 +155,7 @@ final class NexiContext implements Context
     }
 
     /**
-     * @Then /^I should be redirected to the order page$/
+     * @Then I should be redirected to the order page
      */
     public function iShouldBeRedirectedToTheOrderPage(): void
     {
