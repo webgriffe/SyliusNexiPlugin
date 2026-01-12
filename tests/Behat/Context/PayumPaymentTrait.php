@@ -30,7 +30,7 @@ trait PayumPaymentTrait
     }
 
     /**
-     * @return array{PaymentSecurityTokenInterface, PaymentSecurityTokenInterface}
+     * @return array{PaymentSecurityTokenInterface, PaymentSecurityTokenInterface, PaymentSecurityTokenInterface}
      */
     private function getCurrentPaymentSecurityTokens(PaymentInterface $payment): array
     {
@@ -40,12 +40,13 @@ trait PayumPaymentTrait
                 $token->getDetails()->getClass() === get_class($payment)
             ;
         });
-        Assert::count($paymentSecurityTokens, 3, sprintf('Expected 4 payment security tokens, got %s.', count($paymentSecurityTokens)));
+        Assert::count($paymentSecurityTokens, 4, sprintf('Expected 4 payment security tokens, got %s.', count($paymentSecurityTokens)));
 
         $paymentCaptureSecurityToken = $this->extractCaptureSecurityToken($paymentSecurityTokens);
         $paymentNotifySecurityToken = $this->extractNotifySecurityToken($paymentSecurityTokens);
+        $paymentCancelSecurityToken = $this->extractCancelSecurityToken($paymentSecurityTokens);
 
-        return [$paymentCaptureSecurityToken, $paymentNotifySecurityToken];
+        return [$paymentCaptureSecurityToken, $paymentNotifySecurityToken, $paymentCancelSecurityToken];
     }
 
     /**
