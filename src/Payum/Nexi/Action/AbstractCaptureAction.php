@@ -19,6 +19,7 @@ use Webgriffe\LibQuiPago\Notification\Result;
 use Webgriffe\LibQuiPago\Signature\Checker;
 use Webgriffe\LibQuiPago\Signature\InvalidMacException;
 use Webgriffe\SyliusNexiPlugin\Decoder\RequestParamsDecoderInterface;
+use Webgriffe\SyliusNexiPlugin\Model\PaymentDetails;
 use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
 use Webmozart\Assert\Assert;
 
@@ -37,9 +38,9 @@ abstract class AbstractCaptureAction implements ActionInterface, ApiAwareInterfa
     protected $api;
 
     public function __construct(
-        private Checker $checker,
-        private RequestParamsDecoderInterface $decoder,
-        private LoggerInterface $logger,
+        private readonly Checker $checker,
+        private readonly RequestParamsDecoderInterface $decoder,
+        private readonly LoggerInterface $logger,
     ) {
         $this->apiClass = Api::class;
     }
@@ -51,7 +52,7 @@ abstract class AbstractCaptureAction implements ActionInterface, ApiAwareInterfa
      */
     protected function isPaymentAlreadyCaptured(PaymentInterface $payment): bool
     {
-        if (array_key_exists(Api::RESULT_FIELD, $payment->getDetails())) {
+        if (array_key_exists(PaymentDetails::OUTCOME_KEY, $payment->getDetails())) {
             // Already handled this payment
             return true;
         }
@@ -73,13 +74,13 @@ abstract class AbstractCaptureAction implements ActionInterface, ApiAwareInterfa
         $requestParams = $this->decoder->decode($requestParams);
         $this->logger->debug('Nexi payment capture parameters', ['parameters' => $requestParams]);
 
-        Assert::keyExists($requestParams, Api::RESULT_FIELD, sprintf(
+        Assert::keyExists($requestParams, PaymentDetails::OUTCOME_KEY, sprintf(
             'The key "%s" does not exists in the parameters coming back from Nexi, let\'s check the documentation [%s] if something has changed!',
-            Api::RESULT_FIELD,
+            PaymentDetails::OUTCOME_KEY,
             'https://ecommerce.nexi.it/specifiche-tecniche/codicebase/introduzione.html',
         ));
 
-        $result = (string) $requestParams[Api::RESULT_FIELD];
+        $result = (string) $requestParams[PaymentDetails::OUTCOME_KEY];
         if ($result === Result::OUTCOME_ANNULLO || $result === Result::OUTCOME_ERRORE) {
             $this->logger->notice(sprintf(
                 'Nexi payment status returned for payment with id "%s" from order with id "%s" is "%s".',

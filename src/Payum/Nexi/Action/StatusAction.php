@@ -11,7 +11,7 @@ use Payum\Core\Request\GetStatusInterface;
 use Psr\Log\LoggerInterface;
 use Sylius\Component\Core\Model\PaymentInterface as SyliusPaymentInterface;
 use Webgriffe\LibQuiPago\Notification\Result;
-use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
+use Webgriffe\SyliusNexiPlugin\Model\PaymentDetails;
 use Webmozart\Assert\Assert;
 
 final class StatusAction implements ActionInterface
@@ -50,13 +50,13 @@ final class StatusAction implements ActionInterface
 
             return;
         }
-        Assert::keyExists($paymentDetails, Api::RESULT_FIELD, sprintf(
+        Assert::keyExists($paymentDetails, PaymentDetails::OUTCOME_KEY, sprintf(
             'The key "%s" does not exists in the payment details captured, let\'s check the documentation [%s] if something has changed!',
-            Api::RESULT_FIELD,
+            PaymentDetails::OUTCOME_KEY,
             'https://ecommerce.nexi.it/specifiche-tecniche/codicebase/introduzione.html',
         ));
 
-        $result = (string) $paymentDetails[Api::RESULT_FIELD];
+        $result = (string) $paymentDetails[PaymentDetails::OUTCOME_KEY];
         if ($result === Result::OUTCOME_OK) {
             $this->logger->info(sprintf(
                 'Request captured for payment with id "%s" from order with id "%s".',

@@ -25,3 +25,14 @@ webgriffe_sylius_nexi_plugin_ajax:
 imports:
     - { resource: "@WebgriffeSyliusNexiPlugin/config/config.php" }
 ```
+
+## Upgrade from version 2.x to 3.x
+
+With this version we have removed the capturance of the payment from the request of the return URL, to improve security and comply with best practices.
+This requires now to specify a cancel URL for Nexi which will be used in case the user cancels the payment on Nexi side or if any general error occurs during the payment process.
+Add the following route from Payum if you don't have it already:
+
+```yaml
+sylius_shop_payum_cancel:
+   resource: "@PayumBundle/Resources/config/routing/cancel.xml"
+```

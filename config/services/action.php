@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Action\CancelAction;
 use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Action\CaptureAction;
 use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Action\NotifyAction;
 use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Action\NotifyNullAction;
@@ -51,5 +52,16 @@ return static function (ContainerConfigurator $containerConfigurator) {
             service('webgriffe_sylius_nexi.factory.get_http_request'),
         ])
         ->tag('payum.action', ['factory' => Api::CODE, 'alias' => 'payum.action.notify_null'])
+    ;
+
+    $services->set('webgriffe_sylius_nexi.action.cancel', CancelAction::class)
+        ->public()
+        ->args([
+            service('webgriffe_sylius_nexi.lib.checker'),
+            service('webgriffe_sylius_nexi.decoder.request_params'),
+            service('webgriffe_sylius_nexi.logger'),
+            service('webgriffe_sylius_nexi.factory.get_http_request'),
+        ])
+        ->tag('payum.action', ['factory' => Api::CODE, 'alias' => 'payum.action.cancel'])
     ;
 };

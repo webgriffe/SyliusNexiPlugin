@@ -12,8 +12,6 @@ final class Api
 
     public const API_URL_LIVE = 'https://ecommerce.nexi.it/ecomm/ecomm/DispatcherServlet';
 
-    public const RESULT_FIELD = 'esito';
-
     public function __construct(private array $config)
     {
     }

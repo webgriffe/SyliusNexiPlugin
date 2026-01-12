@@ -15,5 +15,6 @@ interface RequestFactoryInterface
         PaymentInterface $payment,
         TokenInterface $token,
         TokenInterface $notifyToken,
+        TokenInterface $cancelToken,
     ): Request;
 }
