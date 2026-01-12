@@ -1,4 +1,0 @@
-suites:
-    main:
-        namespace: Webgriffe\SyliusNexiPlugin
-        psr4_prefix: Webgriffe\SyliusNexiPlugin

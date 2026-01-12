@@ -60,3 +60,11 @@ And then override the template `WebgriffeSyliusNexiPlugin/Process/index.html.twi
     {{ encore_entry_script_tags('webgriffe-sylius-nexi-entry', null, 'sylius.shop') }}
 {% endblock %}
 ```
+
+## Upgrade from version 3.x to 4.x
+
+In this version, we have updated the plugin to be compatible with version 2 of Sylius.
+
+- The route `@WebgriffeSyliusNexiPlugin/config/shop_routing.php` has been renamed to `@WebgriffeSyliusNexiPlugin/config/routes/shop.php`.
+- The route `@WebgriffeSyliusNexiPlugin/config/shop_ajax_routing.php` has been renamed to `@WebgriffeSyliusNexiPlugin/config/routes/shop_ajax.php`.
+
