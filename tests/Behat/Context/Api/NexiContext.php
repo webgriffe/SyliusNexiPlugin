@@ -53,7 +53,7 @@ final class NexiContext implements Context
     }
 
     /**
-     * @When /^Nexi notify the store about the failed payment$/
+     * @When Nexi notify the store about the failed payment
      */
     public function nexiNotifyTheStoreAboutTheFailedPayment(): void
     {
@@ -165,20 +165,6 @@ final class NexiContext implements Context
             'data' => $date,
             'orario' => $time,
             'codAut' => 'OKAY',
-        ];
-    }
-
-    private function getCancelResponsePayload(PaymentInterface $payment): array
-    {
-        $date = date('Ymd');
-        $time = date('Hmi');
-
-        return [
-            PaymentDetails::OUTCOME_KEY => Result::OUTCOME_ANNULLO,
-            'alias' => PaymentContext::NEXI_ALIAS,
-            'importo' => (string) $payment->getAmount(),
-            'divisa' => Currency::EURO_CURRENCY_CODE,
-            'codTrans' => $this->getPaymentCode($payment),
         ];
     }
 }
