@@ -56,7 +56,7 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
      * This action is invoked by two main entries: the starting payment procedure and the return back to the store,
      * of the buyer, after a completed, cancelled or failed checkout on Nexi.
      * The purpose of this action is also to capture the payment parameters if the Server2Server POST notify
-     * is not yat arrived.
+     * is not yet arrived.
      *
      * @psalm-suppress MoreSpecificImplementedParamType
      *
@@ -94,11 +94,11 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
         $storedPaymentDetails = $payment->getDetails();
         if ($storedPaymentDetails !== [] || count($requestParameters) > 0) {
             // It is the request coming back from Nexi after the checkout or another strange case,
-            // anyway we don't more capture the payment from the user request, we redirect the user to the
+            // anyway we no longer capture the payment from the user request, we redirect the user to the
             // waiting page while attending for the Server2Server notify
 
             $this->logger->info(sprintf(
-                'Here it is the capture action called back from Nexi for payment id "%d" or maybe the payment is already captured, redirecting to the waiting processing page.',
+                'The capture action has been called back from Nexi for payment id "%d" or maybe the payment is already captured, redirecting to the waiting processing page.',
                 (string) $payment->getId(),
             ));
 
