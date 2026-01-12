@@ -3,10 +3,8 @@ webgriffe_sylius_nexi:
         processing_payment: 'Stiamo processando il tuo pagamento!'
         please_wait: 'Per favore, attendi fino a quando non vedrai una nuova pagina di stato!'
         loading: 'Caricamento in corso'
-        return_to_nexi_checkout: 'Clicca qui se vuoi tornare al checkout di Klarna per ultimare il tuo pagamento.'
     form:
         gateway_configuration:
-            username: 'Nome utente'
-            password: 'Password'
-            server_region: 'Regione del server'
+            alias: 'Alias merchant'
+            mac_key: 'Chiave MAC'
             sandbox: 'Modalità Sandbox'

@@ -12,7 +12,10 @@ final class Api
 
     public const API_URL_LIVE = 'https://ecommerce.nexi.it/ecomm/ecomm/DispatcherServlet';
 
-    public function __construct(private array $config)
+    /**
+     * @param array{sandbox: bool, alias: string, mac_key: string} $config
+     */
+    public function __construct(private readonly array $config)
     {
     }
 
