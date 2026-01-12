@@ -65,18 +65,6 @@ final class NexiContext implements Context
     }
 
     /**
-     * @When /^Nexi notify the store about the cancelled payment$/
-     */
-    public function nexiNotifyTheStoreAboutTheCancelledPayment(): void
-    {
-        $payment = $this->getCurrentPayment();
-        [$paymentCaptureSecurityToken, $paymentNotifySecurityToken] = $this->getCurrentPaymentSecurityTokens($payment);
-
-        $cancelResponsePayload = $this->getCancelResponsePayload($payment);
-        $this->notifyPaymentState($paymentNotifySecurityToken, $cancelResponsePayload);
-    }
-
-    /**
      * @return PaymentRepositoryInterface<PaymentInterface>
      */
     protected function getPaymentRepository(): PaymentRepositoryInterface

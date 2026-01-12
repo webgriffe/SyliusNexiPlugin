@@ -50,8 +50,6 @@ Feature: Paying with nexi during checkout
         And I have proceeded selecting "Nexi payment method" payment method
         When I confirm my order
         And I cancel the payment on Nexi
-        Then I should be on the waiting payment processing page
-        When Nexi notify the store about the cancelled payment
         Then I should be redirected to the order page
         And I should be notified that my payment has been cancelled
         And I should be able to pay again
@@ -62,7 +60,6 @@ Feature: Paying with nexi during checkout
         And I have proceeded selecting "Nexi payment method" payment method
         And I have confirmed order
         But I have cancelled Nexi payment
-        And Nexi notify the store about the cancelled payment
         Then I should be redirected to the order page
         When I try to pay again with Nexi
         And Nexi notify the store about the successful payment

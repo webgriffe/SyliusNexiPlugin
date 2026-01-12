@@ -20,6 +20,7 @@ class RequestFactorySpec extends ObjectBehavior
         PaymentInterface $payment,
         TokenInterface $token,
         TokenInterface $notifyToken,
+        TokenInterface $cancelToken,
         CustomerInterface $customer,
     ): void {
         $customer->getEmail()->willReturn('customer@email.com');
@@ -38,6 +39,8 @@ class RequestFactorySpec extends ObjectBehavior
 
         $notifyToken->getTargetUrl()->willReturn('https://notify.url?notify_token=HASH_TOKEN');
 
+        $cancelToken->getTargetUrl()->willReturn('https://cancel.url');
+
         $this->beConstructedWith();
     }
 
@@ -55,12 +58,14 @@ class RequestFactorySpec extends ObjectBehavior
         PaymentInterface $payment,
         TokenInterface $token,
         TokenInterface $notifyToken,
+        TokenInterface $cancelToken,
     ): void {
         $this->create(
             'ALIAS_WEB_111111',
             $payment,
             $token,
             $notifyToken,
+            $cancelToken,
         )->shouldReturnAnInstanceOf(Request::class);
     }
 }
