@@ -77,7 +77,12 @@ final class NexiContext implements Context
         $payment = $this->getCurrentPayment();
         [$paymentCaptureSecurityToken, $paymentNotifySecurityToken, $paymentCancelSecurityToken] = $this->getCurrentPaymentSecurityTokens($payment);
 
-        $this->checkIfAllDataToSendToNexiAreOk($paymentCaptureSecurityToken, $paymentNotifySecurityToken, $paymentCancelSecurityToken, $payment);
+        $this->checkIfAllDataToSendToNexiAreOk(
+            $paymentCaptureSecurityToken,
+            $paymentNotifySecurityToken,
+            $paymentCancelSecurityToken,
+            $payment,
+        );
     }
 
     /**
@@ -127,7 +132,15 @@ final class NexiContext implements Context
      */
     public function iCompleteThePaymentOnNexiWithoutReturningToTheStore(): void
     {
-        // Do nothing
+        $payment = $this->getCurrentPayment();
+        [$paymentCaptureSecurityToken, $paymentNotifySecurityToken, $paymentCancelSecurityToken] = $this->getCurrentPaymentSecurityTokens($payment);
+
+        $this->checkIfAllDataToSendToNexiAreOk(
+            $paymentCaptureSecurityToken,
+            $paymentNotifySecurityToken,
+            $paymentCancelSecurityToken,
+            $payment,
+        );
     }
 
     /**
