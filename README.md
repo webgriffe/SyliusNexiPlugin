@@ -21,8 +21,59 @@ This plugin implements the [Hosted Payment Page](https://developer.nexi.it/it/mo
     ```
 
 2. Add `Webgriffe\SyliusNexiPlugin\WebgriffeSyliusNexiPlugin::class => ['all' => true]` to your `config/bundles.php`.
+   
+   Normally, the plugin is automatically added to the `config/bundles.php` file by the `composer require` command. If it is not, you have to add it manually.
+3. 
+4. Create a new file config/packages/webgriffe_sylius_nexi_plugin.yaml:
+   ```yaml
+   imports:
+       - { resource: "@WebgriffeSyliusNexiPlugin/config/config.php" }
 
-3. (Optional) It's suggested to also install the [Payum Lock Request Extension Bundle](https://github.com/webgriffe/PayumLockRequestExtensionBundle):
+   ```
+
+4. Import the routes needed. Add the following to your config/routes.yaml file:
+   ```yaml
+   webgriffe_sylius_nexi_plugin_shop:
+       resource: "@WebgriffeSyliusNexiPlugin/config/shop_routing.php"
+       prefix: /{_locale}
+       requirements:
+           _locale: ^[A-Za-z]{2,4}(_([A-Za-z]{4}|[0-9]{3}))?(_([A-Za-z]{2}|[0-9]{3}))?$
+
+   webgriffe_sylius_nexi_plugin_ajax:
+       resource: "@WebgriffeSyliusNexiPlugin/config/shop_ajax_routing.php"
+
+   sylius_shop_payum_cancel:
+       resource: "@PayumBundle/Resources/config/routing/cancel.xml"
+
+   ```
+   **NB:** The file shop_routing needs to be after the prefix _locale, so that messages can be displayed in the right
+   language. You should also include the cancel routes from the Payum bundle if you do not have it already!
+
+5. Run:
+    ```bash
+    php bin/console sylius:install:assets
+   ```
+   Or, you can add the entry to your webpack.config.js file:
+    ```javascript
+    .addEntry(
+        'webgriffe-sylius-nexi-entry',
+        './vendor/webgriffe/sylius-nexi-plugin/public/poll_payment.js'
+    )
+    ```
+   And then override the template `WebgriffeSyliusNexiPlugin/Process/index.html.twig` to include the entry:
+    ```twig
+    {% block javascripts %}
+        {{ parent() }}
+
+        <script>
+            window.afterUrl = "{{ afterUrl }}";
+            window.paymentStatusUrl = "{{ paymentStatusUrl }}";
+        </script>
+        {{ encore_entry_script_tags('webgriffe-sylius-nexi-entry', null, 'sylius.shop') }}
+    {% endblock %}
+    ```
+
+6. (Optional) It's suggested to also install the [Payum Lock Request Extension Bundle](https://github.com/webgriffe/PayumLockRequestExtensionBundle):
     ```shell
     composer require webgriffe/payum-lock-request-extension-bundle
     ```
