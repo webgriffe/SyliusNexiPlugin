@@ -1,0 +1,11 @@
+webgriffe_sylius_nexi_shop:
+    resource: "@WebgriffeSyliusNexiPlugin/config/routes/shop.php"
+    prefix: /{_locale}
+    requirements:
+        _locale: ^[A-Za-z]{2,4}(_([A-Za-z]{4}|[0-9]{3}))?(_([A-Za-z]{2}|[0-9]{3}))?$
+
+webgriffe_sylius_nexi_shop_ajax:
+    resource: "@WebgriffeSyliusNexiPlugin/config/routes/shop_ajax.php"
+
+sylius_shop_payum_cancel:
+    resource: "@PayumBundle/Resources/config/routing/cancel.xml"
