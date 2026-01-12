@@ -19,6 +19,7 @@ use Webgriffe\LibQuiPago\Notification\Result;
 use Webgriffe\LibQuiPago\Signature\Checker;
 use Webgriffe\LibQuiPago\Signature\InvalidMacException;
 use Webgriffe\SyliusNexiPlugin\Decoder\RequestParamsDecoderInterface;
+use Webgriffe\SyliusNexiPlugin\Helper\PaymentDetailsHelper;
 use Webgriffe\SyliusNexiPlugin\Model\PaymentDetails;
 use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
 use Webmozart\Assert\Assert;
@@ -52,12 +53,13 @@ abstract class AbstractCaptureAction implements ActionInterface, ApiAwareInterfa
      */
     protected function isPaymentAlreadyCaptured(PaymentInterface $payment): bool
     {
-        if (array_key_exists(PaymentDetails::OUTCOME_KEY, $payment->getDetails())) {
-            // Already handled this payment
-            return true;
+        $storedPaymentDetails = $payment->getDetails();
+        if (!PaymentDetailsHelper::areValid($storedPaymentDetails)) {
+            return false;
         }
+        $paymentDetails = PaymentDetails::createFromStoredPaymentDetails($storedPaymentDetails);
 
-        return false;
+        return $paymentDetails->isCaptured();
     }
 
     /**

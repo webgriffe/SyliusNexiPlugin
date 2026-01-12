@@ -13,7 +13,7 @@ final class NexiGatewayFactory extends GatewayFactory
     {
         $config->defaults(
             [
-                'payum.factory_name' => 'nexi',
+                'payum.factory_name' => Api::CODE,
                 'payum.factory_title' => 'Nexi Payment',
                 'payum.action.status' => '@webgriffe_sylius_nexi.action.status',
             ],
@@ -25,6 +25,11 @@ final class NexiGatewayFactory extends GatewayFactory
             $config['payum.default_options'] = $defaultOptions;
             $config['payum.required_options'] = ['alias', 'mac_key', 'sandbox'];
 
+            /**
+             * @psalm-suppress MixedArgumentTypeCoercion
+             *
+             * @phpstan-ignore-next-line
+             */
             $config['payum.api'] = static fn (\ArrayObject $config): Api => new Api((array) $config);
         }
     }
