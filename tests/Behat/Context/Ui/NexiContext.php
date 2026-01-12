@@ -24,7 +24,7 @@ use Webgriffe\LibQuiPago\Lists\Currency;
 use Webgriffe\LibQuiPago\Lists\SignatureMethod;
 use Webgriffe\LibQuiPago\Notification\Result;
 use Webgriffe\LibQuiPago\Signature\DefaultSignatureHashingManager;
-use Webgriffe\SyliusNexiPlugin\Payum\Nexi\Api;
+use Webgriffe\SyliusNexiPlugin\Model\PaymentDetails;
 use Webmozart\Assert\Assert;
 
 final class NexiContext implements Context
@@ -90,7 +90,7 @@ final class NexiContext implements Context
         [$paymentCaptureSecurityToken] = $this->getCurrentCaptureAndNotifyPaymentSecurityTokens($payment);
 
         $cancelResponsePayload = [
-            Api::RESULT_FIELD => Result::OUTCOME_ANNULLO,
+            PaymentDetails::OUTCOME_KEY => Result::OUTCOME_ANNULLO,
             'alias' => PaymentContext::NEXI_ALIAS,
             'importo' => (string) $payment->getAmount(),
             'divisa' => Currency::EURO_CURRENCY_CODE,
@@ -325,7 +325,7 @@ final class NexiContext implements Context
         $time = date('Hmi');
 
         return [
-            Api::RESULT_FIELD => Result::OUTCOME_OK,
+            PaymentDetails::OUTCOME_KEY => Result::OUTCOME_OK,
             'messaggio' => 'Transazione autorizzata.',
             'alias' => PaymentContext::NEXI_ALIAS,
             'importo' => (string) $payment->getAmount(),

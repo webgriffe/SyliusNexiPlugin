@@ -119,11 +119,24 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
         $order = $payment->getOrder();
         Assert::isInstanceOf($order, OrderInterface::class);
 
-        $token = $request->getToken();
-        Assert::isInstanceOf($token, TokenInterface::class);
-
-        $notifyToken = $this->tokenFactory->createNotifyToken($token->getGatewayName(), $token->getDetails());
-        $nexiRequest = $this->requestFactory->create($this->api->getMerchantAlias(), $payment, $token, $notifyToken);
+        $notifyToken = $this->tokenFactory->createNotifyToken(
+            $captureToken->getGatewayName(),
+            $captureToken->getDetails(),
+        );
+        $cancelToken = $this->tokenFactory->createToken(
+            $captureToken->getGatewayName(),
+            $captureToken->getDetails(),
+            'payum_cancel_do',
+            [],
+            $captureToken->getAfterUrl(),
+        );
+        $nexiRequest = $this->requestFactory->create(
+            $this->api->getMerchantAlias(),
+            $payment,
+            $captureToken,
+            $notifyToken,
+            $cancelToken,
+        );
 
         $this->signer->sign($nexiRequest, $this->api->getMacKey(), SignatureMethod::SHA1_METHOD);
         $this->logger->debug('Nexi payment request prepared for the client browser', ['request' => $nexiRequest->getParams()]);
