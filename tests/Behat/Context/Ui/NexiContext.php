@@ -70,9 +70,9 @@ final class NexiContext implements Context
     }
 
     /**
-     * @Then I should see be successfully redirected to Nexi payment gateway
+     * @Then I should be successfully redirected to Nexi payment gateway
      */
-    public function iShouldSeeBeSuccessfullyRedirectedToNexiPaymentGateway(): void
+    public function iShouldBeSuccessfullyRedirectedToNexiPaymentGateway(): void
     {
         $payment = $this->getCurrentPayment();
         [$paymentCaptureSecurityToken, $paymentNotifySecurityToken, $paymentCancelSecurityToken] = $this->getCurrentPaymentSecurityTokens($payment);

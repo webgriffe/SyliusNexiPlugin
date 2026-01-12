@@ -17,7 +17,7 @@ Feature: Paying with nexi during checkout
         Given I added product "PHP T-Shirt" to the cart
         And I have proceeded selecting "Nexi payment method" payment method
         When I confirm my order
-        Then I should see be successfully redirected to Nexi payment gateway
+        Then I should be successfully redirected to Nexi payment gateway
 
     @ui @javascript
     Scenario: Successful payment

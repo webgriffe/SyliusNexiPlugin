@@ -47,7 +47,7 @@ final class PaymentDetails
 
     private ?string $mail = null;
 
-    private ?string $fistName = null;
+    private ?string $firstName = null;
 
     private ?string $alias = null;
 
@@ -133,14 +133,14 @@ final class PaymentDetails
         $this->mail = $mail;
     }
 
-    public function getFistName(): ?string
+    public function getFirstName(): ?string
     {
-        return $this->fistName;
+        return $this->firstName;
     }
 
-    public function setFistName(?string $fistName): void
+    public function setFirstName(?string $firstName): void
     {
-        $this->fistName = $fistName;
+        $this->firstName = $firstName;
     }
 
     public function getAlias(): ?string
@@ -394,7 +394,7 @@ final class PaymentDetails
             $paymentDetails->setMail($storedPaymentDetails['mail']);
         }
         if (array_key_exists('nome', $storedPaymentDetails)) {
-            $paymentDetails->setFistName($storedPaymentDetails['nome']);
+            $paymentDetails->setFirstName($storedPaymentDetails['nome']);
         }
         if (array_key_exists('alias', $storedPaymentDetails)) {
             $paymentDetails->setAlias($storedPaymentDetails['alias']);

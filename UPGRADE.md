@@ -28,11 +28,35 @@ imports:
 
 ## Upgrade from version 2.x to 3.x
 
-With this version we have removed the capturance of the payment from the request of the return URL, to improve security and comply with best practices.
+With this version we have removed the capture of the payment from the request of the return URL, to improve security and comply with best practices.
 This requires now to specify a cancel URL for Nexi which will be used in case the user cancels the payment on Nexi side or if any general error occurs during the payment process.
 Add the following route from Payum if you don't have it already:
 
 ```yaml
 sylius_shop_payum_cancel:
    resource: "@PayumBundle/Resources/config/routing/cancel.xml"
+```
+
+Run:
+```bash
+php bin/console sylius:install:assets
+```
+Or, you can add the entry to your webpack.config.js file:
+```javascript
+    .addEntry(
+        'webgriffe-sylius-nexi-entry',
+        './vendor/webgriffe/sylius-nexi-plugin/public/poll_payment.js'
+    )
+```
+And then override the template `WebgriffeSyliusNexiPlugin/Process/index.html.twig` to include the entry:
+```twig
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        window.afterUrl = "{{ afterUrl }}";
+        window.paymentStatusUrl = "{{ paymentStatusUrl }}";
+    </script>
+    {{ encore_entry_script_tags('webgriffe-sylius-nexi-entry', null, 'sylius.shop') }}
+{% endblock %}
 ```

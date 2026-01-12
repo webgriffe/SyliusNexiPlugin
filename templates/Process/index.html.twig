@@ -12,8 +12,8 @@
     {{ parent() }}
 
     <script>
-        window.afterUrl = "{{ afterUrl }}";
-        window.paymentStatusUrl = "{{ paymentStatusUrl }}";
+        window.afterUrl = "{{ afterUrl|e('js') }}";
+        window.paymentStatusUrl = "{{ paymentStatusUrl|e('js') }}";
     </script>
     <script src="{{ asset('bundles/webgriffesyliusnexiplugin/poll_payment.js') }}"></script>
 {% endblock %}
