@@ -53,6 +53,12 @@ return static function (ContainerConfigurator $container): void {
                     'priority' => 0,
                 ],
             ],
+            'sylius_shop.base.footer.content' => [
+                'payment_methods' => [
+                    'template' => '@WebgriffeSyliusNexiPlugin/shop/shared/layout/base/footer/content/payment_methods.html.twig',
+                    'priority' => 100,
+                ],
+            ],
         ],
     ]);
 };
