@@ -175,6 +175,14 @@ final class NexiContext implements Context
     }
 
     /**
+     * @Then I should be notified that my payment has been completed
+     */
+    public function iShouldBeNotifiedThatMyPaymentHasBeenCompleted()
+    {
+        $this->assertNotification('Payment has been completed.');
+    }
+
+    /**
      * @return PaymentRepositoryInterface<PaymentInterface>
      */
     protected function getPaymentRepository(): PaymentRepositoryInterface
