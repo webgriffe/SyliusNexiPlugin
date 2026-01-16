@@ -5,3 +5,11 @@ imports:
 twig:
     paths:
         '%kernel.project_dir%/../../../tests/TestApplication/templates': ~
+
+monolog:
+    handlers:
+        payum:
+            type: stream
+            path: "%kernel.logs_dir%/payum_%kernel.environment%.log"
+            level: debug
+            channels: ['payum']

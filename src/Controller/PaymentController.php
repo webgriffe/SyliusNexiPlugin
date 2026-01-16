@@ -90,7 +90,7 @@ final class PaymentController extends AbstractController
             UrlGeneratorInterface::ABSOLUTE_URL,
         );
 
-        return $this->render('@WebgriffeSyliusNexiPlugin/Process/index.html.twig', [
+        return $this->render('@WebgriffeSyliusNexiPlugin/shop/process/index.html.twig', [
             'afterUrl' => $token->getAfterUrl(),
             'paymentStatusUrl' => $paymentStatusUrl,
         ]);

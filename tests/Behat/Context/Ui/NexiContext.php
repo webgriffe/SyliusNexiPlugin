@@ -169,7 +169,7 @@ final class NexiContext implements Context
     /**
      * @Then I should be notified that my payment is failed
      */
-    public function iShouldBeNotifiedThatMyPaymentHasBeenCancelled(): void
+    public function iShouldBeNotifiedThatMyPaymentIsFailed(): void
     {
         $this->assertNotification('Payment has failed.');
     }
@@ -180,6 +180,14 @@ final class NexiContext implements Context
     public function iShouldBeNotifiedThatMyPaymentHasBeenCompleted()
     {
         $this->assertNotification('Payment has been completed.');
+    }
+
+    /**
+     * @Then I should be notified that my payment has been cancelled
+     */
+    public function iShouldBeNotifiedThatMyPaymentHasBeenCancelled(): void
+    {
+        $this->assertNotification('Payment has been cancelled.');
     }
 
     /**
