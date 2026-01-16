@@ -79,6 +79,15 @@
         }
     },
     "scripts": {
+        "post-install-cmd": [
+            "@create-console-symlink"
+        ],
+        "post-update-cmd": [
+            "@create-console-symlink"
+        ],
+        "create-console-symlink": [
+            "@php bin/create_console_symlink.php"
+        ],
         "post-create-project-cmd": [
             "@php bin/rename-plugin.php"
         ],
