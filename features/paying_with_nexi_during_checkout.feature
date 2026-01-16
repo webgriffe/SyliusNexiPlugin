@@ -30,7 +30,7 @@ Feature: Paying with nexi during checkout
         Then I should be redirected to the thank you page
         And I should be notified that my payment has been completed
         When I am viewing the summary of my last order
-        Then I should see its order's payment status as "Completed"
+        Then I should see its order's payment status as "Paid"
 
     @ui @javascript
     Scenario: Failed payment
@@ -51,7 +51,7 @@ Feature: Paying with nexi during checkout
         When I confirm my order
         And I cancel the payment on Nexi
         Then I should be redirected to the order page
-        And I should see its payment state as "Cancelled"
+        And I should be notified that my payment has been cancelled
         And I should be able to pay again
 
     @ui @javascript
@@ -74,4 +74,4 @@ Feature: Paying with nexi during checkout
         And I complete the payment on Nexi without returning to the store
         And Nexi notify the store about the successful payment
         And I am viewing the summary of my last order
-        Then I should see its order's payment status as "Completed"
+        Then I should see its order's payment status as "Paid"
