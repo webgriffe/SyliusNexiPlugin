@@ -35,6 +35,24 @@ return static function (ContainerConfigurator $container): void {
                     'priority' => 0,
                 ],
             ],
+            'webgriffe_sylius_nexi.payment.process' => [
+                'content' => [
+                    'template' => '@WebgriffeSyliusNexiPlugin/shop/payment/process/content.html.twig',
+                    'priority' => 0,
+                ],
+            ],
+            'webgriffe_sylius_nexi.payment.process.content' => [
+                'content' => [
+                    'template' => '@WebgriffeSyliusNexiPlugin/shop/payment/process/content/loading.html.twig',
+                    'priority' => 0,
+                ],
+            ],
+            'webgriffe_sylius_nexi.payment.process#javascripts' => [
+                'scripts' => [
+                    'template' => '@WebgriffeSyliusNexiPlugin/shop/payment/scripts.html.twig',
+                    'priority' => 0,
+                ],
+            ],
         ],
     ]);
 };

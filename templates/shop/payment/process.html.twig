@@ -1,0 +1,9 @@
+{% extends '@SyliusShop/shared/layout/base.html.twig' %}
+
+{% set prefixes = ['webgriffe_sylius_nexi.payment.process'] %}
+
+{% block title %}{{ 'webgriffe_sylius_nexi.ui.processing_payment'|trans }} | {{ parent() }}{% endblock %}
+
+{% block content %}
+    {% hook 'webgriffe_sylius_nexi.payment.process' %}
+{% endblock %}
