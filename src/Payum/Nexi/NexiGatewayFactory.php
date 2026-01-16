@@ -9,6 +9,7 @@ use Payum\Core\GatewayFactory;
 
 final class NexiGatewayFactory extends GatewayFactory
 {
+    #[\Override]
     protected function populateConfig(ArrayObject $config): void
     {
         $config->defaults(

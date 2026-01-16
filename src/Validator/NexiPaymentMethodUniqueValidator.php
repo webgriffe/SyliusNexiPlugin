@@ -27,6 +27,7 @@ final class NexiPaymentMethodUniqueValidator extends ConstraintValidator
     /**
      * @param mixed|PaymentMethodInterface $value
      */
+    #[\Override]
     public function validate(mixed $value, Constraint $constraint): void
     {
         if (!$value instanceof PaymentMethodInterface) {

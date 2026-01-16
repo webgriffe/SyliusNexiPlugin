@@ -14,6 +14,9 @@ use Webgriffe\LibQuiPago\Notification\Result;
 use Webgriffe\SyliusNexiPlugin\Model\PaymentDetails;
 use Webmozart\Assert\Assert;
 
+/**
+ * @psalm-import-type StoredPaymentDetails from PaymentDetails
+ */
 final class StatusAction implements ActionInterface
 {
     public function __construct(private LoggerInterface $logger)
@@ -33,12 +36,14 @@ final class StatusAction implements ActionInterface
      *
      * @param GetStatusInterface&Generic $request
      */
+    #[\Override]
     public function execute($request): void
     {
         RequestNotSupportedException::assertSupports($this, $request);
         /** @var SyliusPaymentInterface $payment */
         $payment = $request->getFirstModel();
 
+        /** @var StoredPaymentDetails $paymentDetails */
         $paymentDetails = $payment->getDetails();
 
         if (count($paymentDetails) === 0) {
@@ -56,7 +61,10 @@ final class StatusAction implements ActionInterface
             'https://ecommerce.nexi.it/specifiche-tecniche/codicebase/introduzione.html',
         ));
 
-        $result = (string) $paymentDetails[PaymentDetails::OUTCOME_KEY];
+        /**
+         * @psalm-suppress PossiblyUndefinedArrayOffset
+         */
+        $result = $paymentDetails[PaymentDetails::OUTCOME_KEY];
         if ($result === Result::OUTCOME_OK) {
             $this->logger->info(sprintf(
                 'Request captured for payment with id "%s" from order with id "%s".',
@@ -100,6 +108,7 @@ final class StatusAction implements ActionInterface
         $request->markUnknown();
     }
 
+    #[\Override]
     public function supports($request): bool
     {
         return

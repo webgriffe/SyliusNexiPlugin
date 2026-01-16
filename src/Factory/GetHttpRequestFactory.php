@@ -8,6 +8,7 @@ use Payum\Core\Request\GetHttpRequest;
 
 final class GetHttpRequestFactory implements GetHttpRequestFactoryInterface
 {
+    #[\Override]
     public function create(): GetHttpRequest
     {
         return new GetHttpRequest();

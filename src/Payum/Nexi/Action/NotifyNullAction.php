@@ -40,6 +40,7 @@ final class NotifyNullAction implements ActionInterface, GatewayAwareInterface
      *
      * @param Notify&Generic $request
      */
+    #[\Override]
     public function execute($request): void
     {
         RequestNotSupportedException::assertSupports($this, $request);
@@ -61,6 +62,7 @@ final class NotifyNullAction implements ActionInterface, GatewayAwareInterface
         $this->gateway->execute(new Notify($token->getToken()));
     }
 
+    #[\Override]
     public function supports($request): bool
     {
         return
