@@ -106,6 +106,10 @@ jobs:
                 run: vendor/bin/psalm
 
             -
+                name: Run PHPSpec
+                run: vendor/bin/phpspec run --ansi -f progress --no-interaction
+
+            -
                 name: Run unit tests
                 run: vendor/bin/phpunit --colors=always --testsuite=unit
 
@@ -164,8 +168,16 @@ jobs:
                 run: google-chrome-stable --enable-automation --disable-background-networking --no-default-browser-check --no-first-run --disable-popup-blocking --disable-default-apps --allow-insecure-localhost --disable-translate --disable-extensions --no-sandbox --enable-features=Metal --headless --remote-debugging-port=9222 --window-size=2880,1800 --proxy-server='direct://' --proxy-bypass-list='*' http://127.0.0.1 > /dev/null 2>&1 &
 
             -
+                name: Install certificates
+                run: symfony server:ca:install || true
+
+            -
                 name: Run webserver
-                run: symfony server:start --port=8080 --no-tls --daemon
+                run: symfony server:start --port=8080 --daemon
+
+            -
+                name: Temp fix for Payum
+                run: composer require "payum/payum 1.7.x-dev#7de7334" --no-interaction
 
             -
                 name: Run Behat
