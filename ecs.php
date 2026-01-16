@@ -13,4 +13,3 @@ return static function (ECSConfig $ecsConfig): void {
 
     $ecsConfig->import('vendor/sylius-labs/coding-standard/ecs.php');
 };
-

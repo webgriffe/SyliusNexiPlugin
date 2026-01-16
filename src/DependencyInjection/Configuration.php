@@ -12,6 +12,7 @@ final class Configuration implements ConfigurationInterface
     /**
      * @psalm-suppress UnusedVariable
      */
+    #[\Override]
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('webgriffe_sylius_nexi_plugin');

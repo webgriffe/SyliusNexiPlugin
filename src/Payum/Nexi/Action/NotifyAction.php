@@ -47,6 +47,7 @@ final class NotifyAction extends AbstractCaptureAction
      *
      * @throws InvalidMacException
      */
+    #[\Override]
     public function execute($request): void
     {
         RequestNotSupportedException::assertSupports($this, $request);
@@ -69,6 +70,7 @@ final class NotifyAction extends AbstractCaptureAction
         $this->capturePaymentDetailsFromRequestParameters($details, $payment, $requestParameters);
     }
 
+    #[\Override]
     public function supports($request): bool
     {
         return

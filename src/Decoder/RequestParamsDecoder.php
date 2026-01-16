@@ -9,6 +9,7 @@ use RuntimeException;
 
 final class RequestParamsDecoder implements RequestParamsDecoderInterface
 {
+    #[\Override]
     public function decode(array $requestParams): array
     {
         foreach (array_keys($requestParams) as $key) {
@@ -41,7 +42,13 @@ final class RequestParamsDecoder implements RequestParamsDecoderInterface
                 '/[\x80-\xFF]+/',
                 /** @param string[] $m */
                 static function (array $m): string {
-                    return mb_convert_encoding($m[0], 'UTF-8', 'ISO-8859-1');
+                    $convertEncoding = mb_convert_encoding($m[0], 'UTF-8', 'ISO-8859-1');
+                    // @phpstan-ignore-next-line mb_convert_encoding can return false
+                    if ($convertEncoding === false) {
+                        return $m[0];
+                    }
+
+                    return $convertEncoding;
                 },
                 $data,
             );

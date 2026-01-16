@@ -13,6 +13,7 @@ final class NexiPaymentMethodUnique extends Constraint
 {
     public string $message = 'webgriffe_sylius_nexi.payment_method.unique';
 
+    #[\Override]
     public function getTargets(): string
     {
         return self::CLASS_CONSTRAINT;

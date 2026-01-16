@@ -37,6 +37,7 @@ final class CancelAction extends AbstractCaptureAction
      *
      * @param (Cancel&Generic)|mixed $request
      */
+    #[\Override]
     public function execute($request): void
     {
         RequestNotSupportedException::assertSupports($this, $request);
@@ -69,6 +70,7 @@ final class CancelAction extends AbstractCaptureAction
         $this->capturePaymentDetailsFromRequestParameters($payment, $payment, $requestParameters);
     }
 
+    #[\Override]
     public function supports($request): bool
     {
         return $request instanceof Cancel &&

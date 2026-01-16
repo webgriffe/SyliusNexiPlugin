@@ -13,6 +13,7 @@ use Webmozart\Assert\Assert;
 
 final class RequestFactory implements RequestFactoryInterface
 {
+    #[\Override]
     public function create(
         string $merchantAlias,
         PaymentInterface $payment,

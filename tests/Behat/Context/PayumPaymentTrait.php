@@ -25,6 +25,7 @@ trait PayumPaymentTrait
         $payments = $this->getPaymentRepository()->findBy(['state' => PaymentInterface::STATE_NEW]);
         Assert::count($payments, 1);
         $payment = reset($payments);
+        Assert::isInstanceOf($payment, PaymentInterface::class);
 
         return $payment;
     }
@@ -59,7 +60,10 @@ trait PayumPaymentTrait
         });
         Assert::count($paymentCaptureSecurityTokens, 1, sprintf('Expected 1 payment capture security token, got %s.', count($paymentCaptureSecurityTokens)));
 
-        return array_pop($paymentCaptureSecurityTokens);
+        $captureToken = array_pop($paymentCaptureSecurityTokens);
+        Assert::isInstanceOf($captureToken, PaymentSecurityTokenInterface::class);
+
+        return $captureToken;
     }
 
     /**
@@ -72,7 +76,10 @@ trait PayumPaymentTrait
         });
         Assert::count($paymentNotifySecurityTokens, 1, sprintf('Expected 1 payment notify security token, got %s.', count($paymentNotifySecurityTokens)));
 
-        return array_pop($paymentNotifySecurityTokens);
+        $notifyToken = array_pop($paymentNotifySecurityTokens);
+        Assert::isInstanceOf($notifyToken, PaymentSecurityTokenInterface::class);
+
+        return $notifyToken;
     }
 
     /**
@@ -85,6 +92,9 @@ trait PayumPaymentTrait
         });
         Assert::count($paymentCancelSecurityTokens, 1, sprintf('Expected 1 payment cancel security token, got %s.', count($paymentCancelSecurityTokens)));
 
-        return array_pop($paymentCancelSecurityTokens);
+        $cancelToken = array_pop($paymentCancelSecurityTokens);
+        Assert::isInstanceOf($cancelToken, PaymentSecurityTokenInterface::class);
+
+        return $cancelToken;
     }
 }

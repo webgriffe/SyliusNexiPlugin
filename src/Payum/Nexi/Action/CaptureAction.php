@@ -66,6 +66,7 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
      *
      * @throws InvalidMacException
      */
+    #[\Override]
     public function execute($request): void
     {
         RequestNotSupportedException::assertSupports($this, $request);
@@ -147,6 +148,7 @@ final class CaptureAction implements ActionInterface, ApiAwareInterface, Gateway
         );
     }
 
+    #[\Override]
     public function supports($request): bool
     {
         return
