@@ -22,8 +22,8 @@ final class RequestParamsDecoder implements RequestParamsDecoderInterface
      *
      * Valid UTF-8 input will be left unmodified, but strings containing
      * invalid UTF-8 codepoints will be reencoded as UTF-8 with an assumed
-     * original encoding of ISO-8859-1. This conversion may result in
-     * incorrect output if the actual encoding was not ISO-8859-1, but it
+     * original encoding of ISO-8859-15. This conversion may result in
+     * incorrect output if the actual encoding was not ISO-8859-15, but it
      * will be clean UTF-8 output and will not rely on expensive and fragile
      * detection algorithms.
      *
