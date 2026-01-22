@@ -4,6 +4,7 @@
     "description": "Nexi payment plugin for Sylius.",
     "keywords": [
         "sylius",
+        "nexi",
         "sylius-plugin"
     ],
     "license": "MIT",
@@ -18,10 +19,10 @@
     },
     "require-dev": {
         "behat/behat": "^3.16",
+        "behat/mink": "^1.13",
         "dbrekelmans/bdi": "^1.4",
         "dmore/behat-chrome-extension": "^1.4",
         "dmore/chrome-mink-driver": "^2.9",
-        "friends-of-behat/mink": "^1.11",
         "friends-of-behat/mink-browserkit-driver": "^1.6",
         "friends-of-behat/mink-debug-extension": "^2.1",
         "friends-of-behat/mink-extension": "^2.7",
@@ -62,7 +63,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "2.0-dev"
+            "dev-master": "4.0-dev"
         },
         "symfony": {
             "require": "^7.4"
@@ -121,8 +122,5 @@
             "@unit",
             "@behat"
         ]
-    },
-    "suggest": {
-        "webgriffe/payum-lock-request-extension-bundle": "A Payum extension providing the ability to lock concurrent requests."
     }
 }
