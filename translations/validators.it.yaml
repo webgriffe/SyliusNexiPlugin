@@ -1,0 +1,3 @@
+webgriffe_sylius_nexi:
+    payment_method:
+        unique: 'Ci deve essere un solo metodo di pagamento per questo gateway.'

@@ -1,0 +1,3 @@
+webgriffe_sylius_nexi:
+    payment_method:
+        unique: 'Il ne doit y avoir qu''un seul mode de paiement pour cette passerelle.'
