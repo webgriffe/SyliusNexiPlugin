@@ -1,0 +1,3 @@
+webgriffe_sylius_nexi:
+    payment_method:
+        unique: 'Debe haber un solo método de pago para esta pasarela.'
