@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Webgriffe\SyliusNexiPlugin\Decoder;
 
-use const PHP_VERSION_ID;
-use RuntimeException;
-
 final class RequestParamsDecoder implements RequestParamsDecoderInterface
 {
     #[\Override]
@@ -52,10 +49,10 @@ final class RequestParamsDecoder implements RequestParamsDecoderInterface
                 },
                 $data,
             );
-            if (!is_string($data)) {
+            if (!\is_string($data)) {
                 $pcreErrorCode = preg_last_error();
 
-                throw new RuntimeException('Failed to preg_replace_callback: ' . $pcreErrorCode . ' / ' . self::pcreLastErrorMessage($pcreErrorCode));
+                throw new \RuntimeException('Failed to preg_replace_callback: ' . $pcreErrorCode . ' / ' . preg_last_error_msg());
             }
             $data = str_replace(
                 ['¤', '¦', '¨', '´', '¸', '¼', '½', '¾'],
@@ -65,22 +62,5 @@ final class RequestParamsDecoder implements RequestParamsDecoderInterface
         }
 
         return $data;
-    }
-
-    public static function pcreLastErrorMessage(int $code): string
-    {
-        if (PHP_VERSION_ID >= 80000) {
-            return preg_last_error_msg();
-        }
-
-        /** @var array<string, int> $constants */
-        $constants = (get_defined_constants(true))['pcre'];
-        $constants = array_filter($constants, static function (string $key): bool {
-            return str_ends_with($key, '_ERROR');
-        }, \ARRAY_FILTER_USE_KEY);
-
-        $constants = array_flip($constants);
-
-        return $constants[$code] ?? 'UNDEFINED_ERROR';
     }
 }
