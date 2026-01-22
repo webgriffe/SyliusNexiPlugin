@@ -177,7 +177,7 @@ final class NexiContext implements Context
     /**
      * @Then I should be notified that my payment has been completed
      */
-    public function iShouldBeNotifiedThatMyPaymentHasBeenCompleted()
+    public function iShouldBeNotifiedThatMyPaymentHasBeenCompleted(): void
     {
         $this->assertNotification('Payment has been completed.');
     }
