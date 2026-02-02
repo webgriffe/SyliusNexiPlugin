@@ -177,7 +177,7 @@ jobs:
 
             -
                 name: Temp fix for Payum
-                run: composer require "payum/payum 1.7.x-dev#7de7334" --no-interaction
+                run: composer require "payum/payum 1.7.x-dev#b824ad0" --no-interaction
 
             -
                 name: Run Behat
