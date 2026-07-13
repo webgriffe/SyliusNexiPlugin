@@ -85,7 +85,7 @@ abstract class AbstractCaptureAction implements ActionInterface, ApiAwareInterfa
                 'https://ecommerce.nexi.it/specifiche-tecniche/codicebase/introduzione.html',
             ));
 
-            throw new HttpResponse(sprintf('Missing "%s" parameter.', PaymentDetails::OUTCOME_KEY), 400);
+            throw new HttpResponse('Request not valid', 400);
         }
 
         $result = (string) $requestParams[PaymentDetails::OUTCOME_KEY];
