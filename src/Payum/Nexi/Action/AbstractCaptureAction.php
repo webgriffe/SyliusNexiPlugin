@@ -11,6 +11,7 @@ use Payum\Core\ApiAwareTrait;
 use Payum\Core\Bridge\Spl\ArrayObject;
 use Payum\Core\GatewayAwareInterface;
 use Payum\Core\GatewayAwareTrait;
+use Payum\Core\Reply\HttpResponse;
 use Psr\Log\LoggerInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
 use Webgriffe\LibQuiPago\Lists\SignatureMethod;
@@ -76,11 +77,16 @@ abstract class AbstractCaptureAction implements ActionInterface, ApiAwareInterfa
         $requestParams = $this->decoder->decode($requestParams);
         $this->logger->debug('Nexi payment capture parameters', ['parameters' => $requestParams]);
 
-        Assert::keyExists($requestParams, PaymentDetails::OUTCOME_KEY, sprintf(
-            'The key "%s" does not exists in the parameters coming back from Nexi, let\'s check the documentation [%s] if something has changed!',
-            PaymentDetails::OUTCOME_KEY,
-            'https://ecommerce.nexi.it/specifiche-tecniche/codicebase/introduzione.html',
-        ));
+        if (!array_key_exists(PaymentDetails::OUTCOME_KEY, $requestParams)) {
+            $this->logger->info(sprintf(
+                'The key "%s" does not exist in the parameters coming back from Nexi for payment with id "%s": the request does not look like a valid Nexi callback, replying with a 400 response. If the request actually comes from Nexi, let\'s check the documentation [%s] if something has changed!',
+                PaymentDetails::OUTCOME_KEY,
+                (string) $payment->getId(),
+                'https://ecommerce.nexi.it/specifiche-tecniche/codicebase/introduzione.html',
+            ));
+
+            throw new HttpResponse(sprintf('Missing "%s" parameter.', PaymentDetails::OUTCOME_KEY), 400);
+        }
 
         $result = (string) $requestParams[PaymentDetails::OUTCOME_KEY];
         if ($result === Result::OUTCOME_ANNULLO || $result === Result::OUTCOME_ERRORE) {
